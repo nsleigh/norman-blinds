@@ -40,3 +40,77 @@ Returns
     "version_control": 0
 }
 ```
+
+## GatewayLogout
+http://192.168.20.78/cgi-bin/cgi/GatewayLogout
+
+POST
+
+Returns
+```json
+{ "status": "Success" }
+```
+
+## AdminLogin
+(Needs GatewayLogin first)
+
+http://192.168.20.78/cgi-bin/cgi/AdminLogin
+
+POST
+
+## AdminLogout
+http://192.168.20.78/cgi-bin/cgi/AdminLogout
+
+POST
+
+Returns
+```json
+{ "status": "Success" }
+```
+
+## getRoomInfo
+(Needs GatewayLogin first - may need AdminLogin)
+
+Stopped working, returns errorCode=-2
+
+http://192.168.20.78/cgi-bin/cgi/getRoomInfo
+
+POST
+
+Returns 
+```json
+{
+    "totalRooms": 2,
+    "rooms": [
+        {
+            "groupname": [
+                "Left",
+                "Middle",
+                "Right",
+                "All",
+                "group5"
+            ],
+            "Id": 17488,
+            "Name": "Study",
+            "Color": 11,
+            "Style": 13,
+            "Sort": 0
+        },
+        {
+            "groupname": [
+                "Left",
+                "Middle",
+                "Right",
+                "All",
+                "group5"
+            ],
+            "Id": 6385,
+            "Name": "Living Room",
+            "Color": 8,
+            "Style": 1,
+            "Sort": 1
+        }
+    ]
+}
+```
+
