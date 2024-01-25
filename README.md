@@ -14,9 +14,16 @@ Other
 
 ## GatewayLogin
 http://192.168.20.78/cgi-bin/cgi/GatewayLogin
-POST { "password":"123456789","app_version":"2.11.21" }
+
+POST 
+```json
+{ "password":"123456789","app_version":"2.11.21" }
+```
+
 Various versions work e.g. 2.10.0
+
 Returns 
+```json
 {
     "initiated": "0",
     "hubName": "home",
@@ -32,4 +39,4 @@ Returns
     "leave": 0,
     "version_control": 0
 }
-
+```
