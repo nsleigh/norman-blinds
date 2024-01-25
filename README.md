@@ -13,15 +13,12 @@ Other
 # API
 
 ## GatewayLogin
-http://192.168.20.78/cgi-bin/cgi/GatewayLogin
-
-POST 
+POST: http://192.168.20.78/cgi-bin/cgi/GatewayLogin \
 ```json
 { "password":"123456789","app_version":"2.11.21" }
 ```
-
-Various versions work e.g. 2.10.0
-
+Various versions work e.g. 2.10.0\
+Password doesn't appear to be set anywhere\
 Returns 
 ```json
 {
@@ -42,41 +39,27 @@ Returns
 ```
 
 ## GatewayLogout
-http://192.168.20.78/cgi-bin/cgi/GatewayLogout
-
-POST
-
+POST: http://192.168.20.78/cgi-bin/cgi/GatewayLogout \
 Returns
 ```json
 { "status": "Success" }
 ```
 
 ## AdminLogin
-(Needs GatewayLogin first)
-
-http://192.168.20.78/cgi-bin/cgi/AdminLogin
-
-POST
+(Needs GatewayLogin first) \
+POST: http://192.168.20.78/cgi-bin/cgi/AdminLogin \
 
 ## AdminLogout
-http://192.168.20.78/cgi-bin/cgi/AdminLogout
-
-POST
-
+POST: http://192.168.20.78/cgi-bin/cgi/AdminLogout \
 Returns
 ```json
 { "status": "Success" }
 ```
 
 ## getRoomInfo
-(Needs GatewayLogin first - may need AdminLogin)
-
-Stopped working, returns errorCode=-2
-
-http://192.168.20.78/cgi-bin/cgi/getRoomInfo
-
-POST
-
+(Needs GatewayLogin first - may need AdminLogin) \
+Stopped working, returns errorCode=-2 \
+POST: http://192.168.20.78/cgi-bin/cgi/getRoomInfo \
 Returns 
 ```json
 {
