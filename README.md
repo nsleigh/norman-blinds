@@ -102,7 +102,7 @@ Returns
 Stopped working, returns errorCode=-2
 POST: http://NORMANHUB_9DDD2D.local/cgi-bin/cgi/getWindowInfo
 Returns
-```
+```json
 {
     "totalWindow": 6,
     "windows": [
