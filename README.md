@@ -17,8 +17,8 @@ POST: http://NORMANHUB_9DDD2D.local/cgi-bin/cgi/GatewayLogin \
 ```json
 { "password":"123456789","app_version":"2.11.21" }
 ```
-Various versions work e.g. 2.10.0\
-Password doesn't appear to be set anywhere\
+Various versions work e.g. 2.10.0, 2.11 \
+Password doesn't appear to be set anywhere \
 Returns 
 ```json
 {
@@ -98,9 +98,9 @@ Returns
 ```
 
 ## getWindowInfo
-(Needs GatewayLogin first)
-Stopped working, returns errorCode=-2
-POST: http://NORMANHUB_9DDD2D.local/cgi-bin/cgi/getWindowInfo
+(Needs GatewayLogin first) \
+Stopped working, returns errorCode=-2 \
+POST: http://NORMANHUB_9DDD2D.local/cgi-bin/cgi/getWindowInfo \
 Returns
 ```json
 {
