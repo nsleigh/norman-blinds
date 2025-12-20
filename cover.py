@@ -6,6 +6,7 @@ from typing import Any
 from homeassistant.components.cover import CoverDeviceClass, CoverEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.const import ATTR_VIA_DEVICE
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -49,7 +50,7 @@ class NormanBlindsCover(CoordinatorEntity[NormanBlindsDataUpdateCoordinator], Co
         coordinator: NormanBlindsDataUpdateCoordinator,
         window: dict[str, Any],
         suggested_area: str | None,
-    ) -> None:
+        ) -> None:
         """Initialize the cover entity."""
 
         super().__init__(coordinator)
@@ -69,6 +70,13 @@ class NormanBlindsCover(CoordinatorEntity[NormanBlindsDataUpdateCoordinator], Co
             self._attr_name = "Blind"
         if suggested_area:
             self._attr_suggested_area = suggested_area
+        device_name = self._attr_name if self._room_name else (self._window_name or "Norman Blind")
+        self._device_info = {
+            "identifiers": {(DOMAIN, f"window_{self._window_id}")} if self._window_id is not None else {(DOMAIN, f"window_{self._attr_name}")},
+            "name": device_name,
+            "manufacturer": "Norman",
+            ATTR_VIA_DEVICE: (DOMAIN, "hub"),
+        }
 
         self._attr_current_cover_position: int | None = None
         self._attr_is_closed: bool | None = None
@@ -79,11 +87,7 @@ class NormanBlindsCover(CoordinatorEntity[NormanBlindsDataUpdateCoordinator], Co
     def device_info(self) -> dict[str, Any]:
         """Return device info for the hub."""
 
-        return {
-            "identifiers": {(DOMAIN, "hub")},
-            "name": "Norman Gateway",
-            "manufacturer": "Norman",
-        }
+        return self._device_info
 
     @property
     def available(self) -> bool:
@@ -129,20 +133,7 @@ class NormanBlindsCover(CoordinatorEntity[NormanBlindsDataUpdateCoordinator], Co
             self._attr_current_cover_position = None
             self._attr_is_closed = None
 
-        battery = window.get("battery")
-        rssi = window.get("Rssi")
-        temp = window.get("temp")
-        attrs: dict[str, Any] = {}
-        if battery is not None:
-            attrs["battery"] = battery
-        if rssi is not None:
-            attrs["rssi"] = rssi
-        if temp is not None:
-            attrs["temperature"] = temp
-        if position is not None:
-            attrs["position"] = position
-
-        self._attr_extra_state_attributes = attrs
+        # Attributes are exposed as dedicated sensors.
 
     async def async_set_cover_position(self, **kwargs: Any) -> None:
         """Not supported by the local gateway."""

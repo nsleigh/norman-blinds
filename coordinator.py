@@ -32,7 +32,8 @@ class NormanBlindsDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         try:
             data = await self.api.async_get_combined_state()
 
-            data["battery_check"] = await self._async_maybe_check_battery()
+            # Battery check disabled to avoid triggering blinds
+            data["battery_check"] = self._last_battery_result
 
             return data
         except NormanBlindsAuthError as err:
@@ -45,17 +46,5 @@ class NormanBlindsDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _async_maybe_check_battery(self) -> Any:
         """Run battery check at most every 6 hours."""
 
-        six_hours_ago = datetime.utcnow() - timedelta(hours=6)
-        if self._last_battery_check and self._last_battery_check > six_hours_ago:
-            return self._last_battery_result
-
-        try:
-            result = await self.api.async_check_battery()
-            self._last_battery_result = result
-            self._last_battery_check = datetime.utcnow()
-            return result
-        except Exception as err:  # pylint: disable=broad-except
-            LOGGER.debug("Battery check failed: %s", err)
-            self._last_battery_result = None
-            self._last_battery_check = datetime.utcnow()
-            return None
+        # Explicitly disabled to avoid unintended blind movement.
+        return self._last_battery_result
