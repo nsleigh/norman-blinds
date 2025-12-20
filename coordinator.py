@@ -1,6 +1,7 @@
 """Coordinator for Norman Blinds."""
 from __future__ import annotations
 
+from datetime import datetime, timedelta
 from typing import Any
 
 from homeassistant.core import HomeAssistant
@@ -16,6 +17,8 @@ class NormanBlindsDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     def __init__(self, hass: HomeAssistant, api: NormanBlindsApiClient) -> None:
         self.api = api
+        self._last_battery_check: datetime | None = None
+        self._last_battery_result: Any | None = None
         super().__init__(
             hass,
             LOGGER,
@@ -27,10 +30,32 @@ class NormanBlindsDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Fetch data from API endpoint."""
 
         try:
-            return await self.api.async_get_combined_state()
+            data = await self.api.async_get_combined_state()
+
+            data["battery_check"] = await self._async_maybe_check_battery()
+
+            return data
         except NormanBlindsAuthError as err:
             raise ConfigEntryAuthFailed from err
         except NormanBlindsApiError as err:
             raise UpdateFailed(str(err)) from err
         except Exception as err:  # pylint: disable=broad-except
             raise UpdateFailed(str(err)) from err
+
+    async def _async_maybe_check_battery(self) -> Any:
+        """Run battery check at most every 6 hours."""
+
+        six_hours_ago = datetime.utcnow() - timedelta(hours=6)
+        if self._last_battery_check and self._last_battery_check > six_hours_ago:
+            return self._last_battery_result
+
+        try:
+            result = await self.api.async_check_battery()
+            self._last_battery_result = result
+            self._last_battery_check = datetime.utcnow()
+            return result
+        except Exception as err:  # pylint: disable=broad-except
+            LOGGER.debug("Battery check failed: %s", err)
+            self._last_battery_result = None
+            self._last_battery_check = datetime.utcnow()
+            return None

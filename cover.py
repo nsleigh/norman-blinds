@@ -38,7 +38,7 @@ class NormanBlindsCover(CoordinatorEntity[NormanBlindsDataUpdateCoordinator], Co
 
     _attr_should_poll = False
     _attr_supported_features = 0
-    _attr_device_class = CoverDeviceClass.BLIND
+    _attr_device_class = CoverDeviceClass.SHUTTER
     _attr_has_entity_name = False
     _attr_is_closed: bool | None = None
     _attr_current_cover_position: int | None = None
@@ -119,7 +119,12 @@ class NormanBlindsCover(CoordinatorEntity[NormanBlindsDataUpdateCoordinator], Co
         position = window.get("position")
         if isinstance(position, (int, float)):
             self._attr_current_cover_position = int(position)
-            self._attr_is_closed = int(position) == 0
+            pos_int = int(position)
+            # Norman shutters report 0 and 100 as closed, mid-values as open.
+            if pos_int == 0 or pos_int == 100:
+                self._attr_is_closed = True
+            else:
+                self._attr_is_closed = False
         else:
             self._attr_current_cover_position = None
             self._attr_is_closed = None
@@ -127,10 +132,6 @@ class NormanBlindsCover(CoordinatorEntity[NormanBlindsDataUpdateCoordinator], Co
         battery = window.get("battery")
         rssi = window.get("Rssi")
         temp = window.get("temp")
-        angle = window.get("angle")
-        if angle is None:
-            angle = window.get("Angle")
-
         attrs: dict[str, Any] = {}
         if battery is not None:
             attrs["battery"] = battery
@@ -138,8 +139,6 @@ class NormanBlindsCover(CoordinatorEntity[NormanBlindsDataUpdateCoordinator], Co
             attrs["rssi"] = rssi
         if temp is not None:
             attrs["temperature"] = temp
-        if angle is not None:
-            attrs["angle"] = angle
         if position is not None:
             attrs["position"] = position
 
