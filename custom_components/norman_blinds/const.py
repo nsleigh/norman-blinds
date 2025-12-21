@@ -17,3 +17,6 @@ LOGIN_ENDPOINT = "/cgi-bin/cgi/GatewayLogin"
 ROOM_INFO_ENDPOINT = "/cgi-bin/cgi/getRoomInfo"
 WINDOW_INFO_ENDPOINT = "/cgi-bin/cgi/getWindowInfo"
 REMOTE_CONTROL_ENDPOINT = "/cgi-bin/cgi/RemoteControl"
+
+REMOTE_CONTROL_MODEL = 1
+ALLOWED_POSITIONS: tuple[int, ...] = (100, 81, 65, 50, 37, 25, 12, 0)

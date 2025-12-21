@@ -91,7 +91,6 @@ WINDOW_SENSORS: list[SensorEntityDescription] = [
         key="solar",
         name="Solar",
         entity_category=EntityCategory.DIAGNOSTIC,
-        entity_registry_enabled_default=False,
     ),
     SensorEntityDescription(
         key="usb",

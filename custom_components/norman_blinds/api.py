@@ -7,11 +7,13 @@ from typing import Any
 from aiohttp import ClientSession
 
 from .const import (
+    ALLOWED_POSITIONS,
     DEFAULT_APP_VERSION,
     LOGGER,
     LOGIN_ENDPOINT,
-    ROOM_INFO_ENDPOINT,
     REMOTE_CONTROL_ENDPOINT,
+    ROOM_INFO_ENDPOINT,
+    REMOTE_CONTROL_MODEL,
     WINDOW_INFO_ENDPOINT,
 )
 
@@ -204,6 +206,22 @@ class NormanBlindsApiClient:
             )
 
         return {"rooms": rooms, "windows": combined}
+
+    async def async_set_window_position(self, window_id: int | str, position: int) -> Any:
+        """Send a position command to a specific blind."""
+
+        if position not in ALLOWED_POSITIONS:
+            raise NormanBlindsApiError(
+                f"Invalid position {position}; supported values: {ALLOWED_POSITIONS}"
+            )
+
+        payload: dict[str, Any] = {
+            "type": "window",
+            "id": window_id,
+            "action": position,
+            "model": REMOTE_CONTROL_MODEL,
+        }
+        return await self._request(REMOTE_CONTROL_ENDPOINT, payload)
 
     @property
     def gateway_info(self) -> dict[str, Any]:
