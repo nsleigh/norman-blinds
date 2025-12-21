@@ -18,7 +18,7 @@ POST: http://NORMANHUB_9DDD2D.local/cgi-bin/cgi/GatewayLogin \
 { "password":"123456789","app_version":"2.11.21" }
 ```
 Various versions work e.g. 2.10.0, 2.11 \
-Password doesn't appear to be set anywhere \
+Password doesn't appear to be set anywhere but has to be 123456789. \
 Returns 
 ```json
 {
@@ -58,7 +58,6 @@ Returns
 
 ## getRoomInfo
 (Needs GatewayLogin first - may need AdminLogin) \
-Stopped working, returns errorCode=-2 \
 POST: http://192.168.20.78/cgi-bin/cgi/getRoomInfo \
 Returns 
 ```json
@@ -99,7 +98,6 @@ Returns
 
 ## getWindowInfo
 (Needs GatewayLogin first) \
-Stopped working, returns errorCode=-2 \
 POST: http://NORMANHUB_9DDD2D.local/cgi-bin/cgi/getWindowInfo \
 Returns
 ```json
