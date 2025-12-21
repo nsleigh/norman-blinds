@@ -34,6 +34,7 @@ class NormanBlindsApiClient:
         self._login_lock = asyncio.Lock()
         self._logged_in = False
         self._app_version = DEFAULT_APP_VERSION
+        self._gateway_info: dict[str, Any] = {}
 
     @property
     def base_url(self) -> str:
@@ -85,6 +86,11 @@ class NormanBlindsApiClient:
                     error_code = login_data.get("errorCode", 0)
                     if error_code not in (None, 0, "0"):
                         raise NormanBlindsAuthError(f"Login failed, errorCode: {error_code}")
+                    self._gateway_info = {
+                        "hubName": login_data.get("hubName"),
+                        "hubId": login_data.get("hubId"),
+                        "swVer": login_data.get("swVer"),
+                    }
 
                 self._logged_in = True
                 LOGGER.debug(
@@ -198,3 +204,9 @@ class NormanBlindsApiClient:
             )
 
         return {"rooms": rooms, "windows": combined}
+
+    @property
+    def gateway_info(self) -> dict[str, Any]:
+        """Return cached gateway info from login."""
+
+        return self._gateway_info

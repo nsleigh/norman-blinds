@@ -27,7 +27,9 @@ class NormanBlindsDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Fetch data from API endpoint."""
 
         try:
-            return await self.api.async_get_combined_state()
+            data = await self.api.async_get_combined_state()
+            data["gateway"] = self.api.gateway_info
+            return data
         except NormanBlindsAuthError as err:
             raise ConfigEntryAuthFailed from err
         except NormanBlindsApiError as err:
