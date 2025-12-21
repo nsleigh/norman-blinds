@@ -149,8 +149,9 @@ class NormanBlindsCover(CoordinatorEntity[NormanBlindsDataUpdateCoordinator], Co
     async def async_open_cover(self, **kwargs: Any) -> None:
         """Open the cover."""
 
-        # "Open" to mid position (50% closed) instead of fully open.
-        await self._send_position_command(50)
+        # Prefer a 63% closed position when opening, snapped to the nearest supported value.
+        target = min(ALLOWED_POSITIONS, key=lambda value: abs(value - 63))
+        await self._send_position_command(target)
 
     async def async_close_cover(self, **kwargs: Any) -> None:
         """Close the cover."""
