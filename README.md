@@ -48,6 +48,10 @@ Returns
 ## AdminLogin
 (Needs GatewayLogin first) \
 POST: http://NORMANHUB_9DDD2D.local/cgi-bin/cgi/AdminLogin \
+Returns
+```json
+{ "status": "Success" }
+```
 
 ## AdminLogout
 POST: http://NORMANHUB_9DDD2D.local/cgi-bin/cgi/AdminLogout \
