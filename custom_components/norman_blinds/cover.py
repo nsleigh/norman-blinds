@@ -124,11 +124,8 @@ class NormanBlindsCover(CoordinatorEntity[NormanBlindsDataUpdateCoordinator], Co
         if isinstance(position, (int, float)):
             self._attr_current_cover_position = int(position)
             pos_int = int(position)
-            # Norman shutters report 0 and 100 as closed, mid-values as open.
-            if pos_int == 0 or pos_int == 100:
-                self._attr_is_closed = True
-            else:
-                self._attr_is_closed = False
+            # Treat only 100 as closed; all other values are considered open.
+            self._attr_is_closed = pos_int == 100
         else:
             self._attr_current_cover_position = None
             self._attr_is_closed = None

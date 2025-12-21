@@ -17,4 +17,3 @@ LOGIN_ENDPOINT = "/cgi-bin/cgi/GatewayLogin"
 ROOM_INFO_ENDPOINT = "/cgi-bin/cgi/getRoomInfo"
 WINDOW_INFO_ENDPOINT = "/cgi-bin/cgi/getWindowInfo"
 REMOTE_CONTROL_ENDPOINT = "/cgi-bin/cgi/RemoteControl"
-BATTERY_CHECK_PAYLOAD = {"type": "check_battery", "action": 1}

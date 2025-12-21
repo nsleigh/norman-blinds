@@ -27,7 +27,7 @@ async def async_setup_entry(
     data = hass.data[DOMAIN][entry.entry_id]
     coordinator: NormanBlindsDataUpdateCoordinator = data["coordinator"]
 
-    entities: list[SensorEntity] = [NormanBatteryCheckSensor(coordinator)]
+    entities: list[SensorEntity] = []
 
     def _build_entities() -> list[SensorEntity]:
         local_entities: list[SensorEntity] = []
@@ -57,44 +57,6 @@ async def async_setup_entry(
         coordinator.hass.async_create_task(_async_add_new_entities())
 
     coordinator.async_add_listener(_handle_coordinator_update)
-
-
-class NormanBatteryCheckSensor(CoordinatorEntity[NormanBlindsDataUpdateCoordinator], SensorEntity):
-    """Sensor exposing the gateway battery check status."""
-
-    _attr_has_entity_name = True
-    _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_name = "Battery Check"
-    _attr_icon = "mdi:battery-check"
-
-    def __init__(self, coordinator: NormanBlindsDataUpdateCoordinator) -> None:
-        super().__init__(coordinator)
-        self._attr_unique_id = "norman_blinds_battery_check"
-
-    @property
-    def native_value(self) -> Any:
-        """Return the battery check result."""
-
-        value = self.coordinator.data.get("battery_check")
-        if isinstance(value, dict):
-            return value.get("check_battery") or value.get("status") or value
-        return value
-
-    @property
-    def available(self) -> bool:
-        """Available when coordinator has data."""
-
-        return self.coordinator.last_update_success
-
-    @property
-    def device_info(self) -> dict[str, Any]:
-        """Return device info for the hub."""
-
-        return {
-            "identifiers": {(DOMAIN, "hub")},
-            "name": "Norman Gateway",
-            "manufacturer": "Norman",
-        }
 
 
 WINDOW_SENSORS: list[SensorEntityDescription] = [
@@ -143,6 +105,12 @@ WINDOW_SENSORS: list[SensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
     ),
+    SensorEntityDescription(
+        key="model",
+        name="Model",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+    ),
 ]
 
 
@@ -166,9 +134,6 @@ def create_window_sensors(
     sensors: list[SensorEntity] = []
     for desc in WINDOW_SENSORS:
         value = window.get(desc.key)
-        if value is None and desc.key.lower() != desc.key:
-            # Try lowercase key if original case not present
-            value = window.get(desc.key.lower())
         if value is None:
             continue
         entity = NormanWindowSensor(

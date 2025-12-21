@@ -7,7 +7,6 @@ from typing import Any
 from aiohttp import ClientSession
 
 from .const import (
-    BATTERY_CHECK_PAYLOAD,
     DEFAULT_APP_VERSION,
     LOGGER,
     LOGIN_ENDPOINT,
@@ -199,8 +198,3 @@ class NormanBlindsApiClient:
             )
 
         return {"rooms": rooms, "windows": combined}
-
-    async def async_check_battery(self) -> Any:
-        """Call the battery check endpoint."""
-
-        return await self._request(REMOTE_CONTROL_ENDPOINT, BATTERY_CHECK_PAYLOAD)

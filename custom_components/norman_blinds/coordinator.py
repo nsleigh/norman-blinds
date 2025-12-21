@@ -1,7 +1,6 @@
 """Coordinator for Norman Blinds."""
 from __future__ import annotations
 
-from datetime import datetime, timedelta
 from typing import Any
 
 from homeassistant.core import HomeAssistant
@@ -17,8 +16,6 @@ class NormanBlindsDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     def __init__(self, hass: HomeAssistant, api: NormanBlindsApiClient) -> None:
         self.api = api
-        self._last_battery_check: datetime | None = None
-        self._last_battery_result: Any | None = None
         super().__init__(
             hass,
             LOGGER,
@@ -30,21 +27,10 @@ class NormanBlindsDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Fetch data from API endpoint."""
 
         try:
-            data = await self.api.async_get_combined_state()
-
-            # Battery check disabled to avoid triggering blinds
-            data["battery_check"] = self._last_battery_result
-
-            return data
+            return await self.api.async_get_combined_state()
         except NormanBlindsAuthError as err:
             raise ConfigEntryAuthFailed from err
         except NormanBlindsApiError as err:
             raise UpdateFailed(str(err)) from err
         except Exception as err:  # pylint: disable=broad-except
             raise UpdateFailed(str(err)) from err
-
-    async def _async_maybe_check_battery(self) -> Any:
-        """Run battery check at most every 6 hours."""
-
-        # Explicitly disabled to avoid unintended blind movement.
-        return self._last_battery_result
