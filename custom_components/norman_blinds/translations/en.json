@@ -1,0 +1,23 @@
+{
+  "title": "Norman Blinds",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to your Norman hub",
+        "description": "Enter the host/IP of your Norman hub. Password defaults to the factory value unless you changed it.",
+        "data": {
+          "host": "Host",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid credentials",
+      "cannot_connect": "Failed to connect to the Norman hub",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "This hub is already configured"
+    }
+  }
+}
