@@ -1,9 +1,9 @@
 # Norman Blinds
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-gren.svg)](https://github.com/custom-components/hacs)
-![version](https://img.shields.io/github/v/release/hugobloem/stateful_scenes)
-![GitHub all releases](https://img.shields.io/github/downloads/hugobloem/stateful_scenes/total)
-![GitHub release (latest by SemVer)](https://img.shields.io/github/downloads/hugobloem/stateful_scenes/latest/total)
+![version](https://img.shields.io/github/v/release/nsleigh/norman_blinds)
+![GitHub all releases](https://img.shields.io/github/downloads/nsleigh/norman_blinds/total)
+![GitHub release (latest by SemVer)](https://img.shields.io/github/downloads/hugobloem/norman_blinds/latest/total)
 
 ![Norman Blinds Logo](images/logo@2x.png)
 
