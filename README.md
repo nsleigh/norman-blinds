@@ -80,6 +80,35 @@ Returns
 { "status": "Success" }
 ```
 
+### RemoteControl
+
+POST: http://NORMANHUB_9DDD2D.local/cgi-bin/cgi/RemoteControl \
+
+#### Blind control
+
+```json
+{ "type":"window", "id":<blind id>, "action":<position>, "model":1 }
+```
+
+|Position|Description|
+|--------|-----------|
+|100|Fully closed (up)|
+|81||
+|65|Nearly fully open|
+|50||
+|37|Like favourite|
+|25||
+|12||
+|0|Nearly fully closed (down)|
+
+Other position values seem to be the same as 0.
+
+#### Room control
+
+```json
+{ "type":"level", "id":<room id>, "action":<position>, "model":1 }
+```
+
 ### getRoomInfo
 
 (Needs GatewayLogin first - may need AdminLogin) \
