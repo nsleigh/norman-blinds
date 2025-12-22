@@ -141,7 +141,16 @@ class NormanBlindsApiClient:
                 return await self._request(endpoint, payload, allow_reauth=False)
 
             response.raise_for_status()
-            data = await response.json(content_type=None)
+            try:
+                data = await response.json(content_type=None)
+            except Exception as err:  # pylint: disable=broad-except
+                LOGGER.debug(
+                    "Failed to parse JSON for %s, returning raw text. Error: %s",
+                    endpoint,
+                    err,
+                )
+                data = body_text
+
             LOGGER.debug("Received response from %s: %s", endpoint, data)
             return data
 

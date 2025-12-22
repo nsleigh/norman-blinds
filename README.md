@@ -1,25 +1,34 @@
 # Norman Blinds
+
+![Norman Blinds Logo](images/logo@2x.png)
+
 Reverse engineering the Norman Blinds hub protocol
 
 Process to reset and detect blinds (this worked when other methods didn't)
+
 - On hub press for 3 seconds in to user setting mode
 - Press three times: Norman Hub factory reset.
 
 Other
+
 - Press for 3 seconds in to user setting mode
 - Press one time: Search shutters.
 - Press two times: Station mode switch to AP mode.
 
-# API
+## API
 
-## GatewayLogin
+### GatewayLogin
+
 POST: http://NORMANHUB_9DDD2D.local/cgi-bin/cgi/GatewayLogin \
+
 ```json
 { "password":"123456789","app_version":"2.11.21" }
 ```
+
 Various versions work e.g. 2.10.0, 2.11 \
 Password doesn't appear to be set anywhere but has to be 123456789. \
-Returns 
+Returns
+
 ```json
 {
     "initiated": "0",
@@ -38,32 +47,40 @@ Returns
 }
 ```
 
-## GatewayLogout
+### GatewayLogout
+
 POST: http://NORMANHUB_9DDD2D.local/cgi-bin/cgi/GatewayLogout \
 Returns
+
 ```json
 { "status": "Success" }
 ```
 
-## AdminLogin
+### AdminLogin
+
 (Needs GatewayLogin first) \
 POST: http://NORMANHUB_9DDD2D.local/cgi-bin/cgi/AdminLogin \
 Returns
+
 ```json
 { "status": "Success" }
 ```
 
-## AdminLogout
+### AdminLogout
+
 POST: http://NORMANHUB_9DDD2D.local/cgi-bin/cgi/AdminLogout \
 Returns
+
 ```json
 { "status": "Success" }
 ```
 
-## getRoomInfo
+### getRoomInfo
+
 (Needs GatewayLogin first - may need AdminLogin) \
 POST: http://192.168.20.78/cgi-bin/cgi/getRoomInfo \
-Returns 
+Returns
+
 ```json
 {
     "totalRooms": 2,
@@ -100,10 +117,12 @@ Returns
 }
 ```
 
-## getWindowInfo
+### getWindowInfo
+
 (Needs GatewayLogin first) \
 POST: http://NORMANHUB_9DDD2D.local/cgi-bin/cgi/getWindowInfo \
 Returns
+
 ```json
 {
     "totalWindow": 6,

@@ -23,15 +23,41 @@ async def async_setup_entry(
     coordinator: NormanBlindsDataUpdateCoordinator = data["coordinator"]
 
     entities: list[NormanBlindsCover] = []
-    for item in coordinator.data.get("windows", []):
-        window = item.get("window") or {}
-        room = item.get("room") or {}
-        suggested_area = item.get("suggested_area") or room.get("Name")
 
-        entity = NormanBlindsCover(coordinator, window, suggested_area)
-        entities.append(entity)
+    def _build_entities() -> list[NormanBlindsCover]:
+        local_entities: list[NormanBlindsCover] = []
+        for item in coordinator.data.get("windows", []):
+            window = item.get("window") or {}
+            room = item.get("room") or {}
+            suggested_area = item.get("suggested_area") or room.get("Name")
 
+            entity = NormanBlindsCover(coordinator, window, suggested_area)
+            local_entities.append(entity)
+        return local_entities
+
+    # Initial batch from current data.
+    entities.extend(_build_entities())
     async_add_entities(entities)
+
+    seen_ids: set[str] = {entity.unique_id for entity in entities if entity.unique_id}
+
+    async def _async_add_new_entities() -> None:
+        new_entities = _build_entities()
+        to_add = [
+            entity
+            for entity in new_entities
+            if entity.unique_id and entity.unique_id not in seen_ids
+        ]
+        if not to_add:
+            return
+
+        seen_ids.update(entity.unique_id for entity in to_add if entity.unique_id)
+        async_add_entities(to_add)
+
+    def _handle_coordinator_update() -> None:
+        coordinator.hass.async_create_task(_async_add_new_entities())
+
+    coordinator.async_add_listener(_handle_coordinator_update)
 
 
 class NormanBlindsCover(CoordinatorEntity[NormanBlindsDataUpdateCoordinator], CoverEntity):

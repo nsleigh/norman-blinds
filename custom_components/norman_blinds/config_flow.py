@@ -6,7 +6,12 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_PASSWORD
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
+from aiohttp import ClientError
+import asyncio
+
+from .api import NormanBlindsApiClient, NormanBlindsApiError, NormanBlindsAuthError
 from .const import DEFAULT_PASSWORD, DOMAIN
 
 DATA_SCHEMA = vol.Schema(
@@ -25,13 +30,36 @@ class NormanBlindsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input: dict | None = None) -> FlowResult:
         """Handle the initial step."""
 
-        if user_input is None:
-            return self.async_show_form(step_id="user", data_schema=DATA_SCHEMA)
+        errors: dict[str, str] = {}
 
-        await self.async_set_unique_id(user_input[CONF_HOST])
-        self._abort_if_unique_id_configured()
+        if user_input is not None:
+            session = async_get_clientsession(self.hass)
+            client = NormanBlindsApiClient(
+                session,
+                user_input[CONF_HOST],
+                user_input.get(CONF_PASSWORD, DEFAULT_PASSWORD),
+            )
 
-        return self.async_create_entry(
-            title=user_input[CONF_HOST],
-            data=user_input,
+            try:
+                # Simple validation: authenticate and fetch current state.
+                await client.async_get_combined_state()
+            except NormanBlindsAuthError:
+                errors["base"] = "invalid_auth"
+            except (NormanBlindsApiError, ClientError, asyncio.TimeoutError):
+                errors["base"] = "cannot_connect"
+            except Exception:  # pylint: disable=broad-except
+                errors["base"] = "unknown"
+            else:
+                await self.async_set_unique_id(user_input[CONF_HOST])
+                self._abort_if_unique_id_configured()
+
+                return self.async_create_entry(
+                    title=user_input[CONF_HOST],
+                    data=user_input,
+                )
+
+        return self.async_show_form(
+            step_id="user",
+            data_schema=DATA_SCHEMA,
+            errors=errors,
         )

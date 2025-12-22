@@ -1,10 +1,11 @@
 {
   "domain": "norman_blinds",
   "name": "Norman Blinds",
-  "version": "0.1.0",
-  "documentation": "https://example.com",
+  "version": "0.2.0",
+  "documentation": "https://github.com/nsleigh/norman-blinds",
+  "issue_tracker": "https://github.com/nsleigh/norman-blinds/issues",
   "requirements": [],
-  "codeowners": [],
+  "codeowners": ["@nsleigh"],
   "config_flow": true,
   "integration_type": "hub",
   "iot_class": "local_polling"
