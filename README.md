@@ -1,5 +1,10 @@
 # Norman Blinds
 
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-gren.svg)](https://github.com/custom-components/hacs)
+![version](https://img.shields.io/github/v/release/hugobloem/stateful_scenes)
+![GitHub all releases](https://img.shields.io/github/downloads/hugobloem/stateful_scenes/total)
+![GitHub release (latest by SemVer)](https://img.shields.io/github/downloads/hugobloem/stateful_scenes/latest/total)
+
 ![Norman Blinds Logo](images/logo@2x.png)
 
 Reverse engineering the Norman Blinds hub protocol
@@ -376,3 +381,11 @@ Returns
     ]
 }
 ```
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+**⚠️ Disclaimer**: This is an unofficial integration not affiliated with Norman Blinds (aka Shutters). Use at your own risk.
