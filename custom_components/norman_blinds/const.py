@@ -9,6 +9,7 @@ DOMAIN = "norman_blinds"
 LOGGER = logging.getLogger(__package__)
 
 DEFAULT_SCAN_INTERVAL = timedelta(seconds=30)
+DEFAULT_REQUEST_TIMEOUT = 10
 
 DEFAULT_APP_VERSION = "2.11.21"
 DEFAULT_PASSWORD = "123456789"

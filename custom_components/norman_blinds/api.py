@@ -4,11 +4,12 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientTimeout
 
 from .const import (
     ALLOWED_POSITIONS,
     DEFAULT_APP_VERSION,
+    DEFAULT_REQUEST_TIMEOUT,
     LOGGER,
     LOGIN_ENDPOINT,
     REMOTE_CONTROL_ENDPOINT,
@@ -37,6 +38,7 @@ class NormanBlindsApiClient:
         self._logged_in = False
         self._app_version = DEFAULT_APP_VERSION
         self._gateway_info: dict[str, Any] = {}
+        self._timeout = ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
 
     @property
     def base_url(self) -> str:
@@ -67,7 +69,7 @@ class NormanBlindsApiClient:
             masked_payload = {**payload, "password": "***"}
             LOGGER.debug("Posting login payload to %s: %s", url, masked_payload)
 
-            async with self._session.post(url, json=payload) as response:
+            async with self._session.post(url, json=payload, timeout=self._timeout) as response:
                 if response.status in (401, 403):
                     raise NormanBlindsAuthError("Invalid credentials for Norman gateway")
                 response.raise_for_status()
@@ -124,7 +126,7 @@ class NormanBlindsApiClient:
             payload or {},
         )
 
-        async with self._session.post(url, json=payload or {}) as response:
+        async with self._session.post(url, json=payload or {}, timeout=self._timeout) as response:
             body_text = await response.text()
             LOGGER.debug(
                 "Response status for %s: %s, headers: %s, body: %s",
