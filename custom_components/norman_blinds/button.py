@@ -109,11 +109,9 @@ class NormanBlindsRoomPresetButton(
         self.entity_description = description
         self._room_id = room_id
         self._room_name = room_name or "Room"
-        label = (
-            description.name
-            or description.translation_key
-            or description.key
-        )
+        # Home Assistant uses a sentinel object for undefined names; prefer translation_key/key when name isn't a real string.
+        name = description.name if isinstance(description.name, str) and description.name else None
+        label = name or description.translation_key or description.key
         self._attr_name = f"{self._room_name} {label}"
         suffix = description.key
         base_id = self._room_id if self._room_id is not None else self._room_name
