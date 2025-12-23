@@ -19,5 +19,18 @@
     "abort": {
       "already_configured": "This hub is already configured"
     }
+  },
+  "entity": {
+    "button": {
+      "view": {
+        "name": "View"
+      },
+      "privacy": {
+        "name": "Privacy"
+      },
+      "favorite": {
+        "name": "Favorite"
+      }
+    }
   }
 }

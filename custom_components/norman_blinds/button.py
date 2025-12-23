@@ -13,9 +13,9 @@ from .const import DOMAIN, LOGGER
 from .coordinator import NormanBlindsDataUpdateCoordinator
 
 PRESET_BUTTONS: list[ButtonEntityDescription] = [
-    ButtonEntityDescription(key="view", name="View"),
-    ButtonEntityDescription(key="privacy", name="Privacy"),
-    ButtonEntityDescription(key="favorite", name="Favorite"),
+    ButtonEntityDescription(key="view", translation_key="view"),
+    ButtonEntityDescription(key="privacy", translation_key="privacy"),
+    ButtonEntityDescription(key="favorite", translation_key="favorite"),
 ]
 
 
@@ -115,7 +115,11 @@ class NormanBlindsRoomPresetButton(
         self.entity_description = description
         self._room_id = room_id
         self._room_name = room_name or "Room"
-        label = description.name or description.key
+        label = (
+            description.name
+            or description.translation_key
+            or description.key
+        )
         self._attr_name = f"{self._room_name} {label}"
         suffix = description.key
         base_id = self._room_id if self._room_id is not None else self._room_name
