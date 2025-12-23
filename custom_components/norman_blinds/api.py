@@ -13,8 +13,10 @@ from .const import (
     LOGGER,
     LOGIN_ENDPOINT,
     REMOTE_CONTROL_ENDPOINT,
-    ROOM_INFO_ENDPOINT,
     REMOTE_CONTROL_MODEL,
+    ROOM_PRESETS,
+    ROOM_REMOTE_CONTROL_LID,
+    ROOM_INFO_ENDPOINT,
     WINDOW_INFO_ENDPOINT,
 )
 
@@ -231,6 +233,37 @@ class NormanBlindsApiClient:
             "id": window_id,
             "action": position,
             "model": REMOTE_CONTROL_MODEL,
+        }
+        return await self._request(REMOTE_CONTROL_ENDPOINT, payload)
+
+    async def async_set_room_position(self, room_id: int | str, position: int) -> Any:
+        """Send a position command to all blinds in a room."""
+
+        if position not in ALLOWED_POSITIONS:
+            raise NormanBlindsApiError(
+                f"Invalid position {position}; supported values: {ALLOWED_POSITIONS}"
+            )
+
+        payload: dict[str, Any] = {
+            "type": "level",
+            "Lid": ROOM_REMOTE_CONTROL_LID,
+            "id": room_id,
+            "action": position,
+            "model": REMOTE_CONTROL_MODEL,
+        }
+        return await self._request(REMOTE_CONTROL_ENDPOINT, payload)
+
+    async def async_set_room_preset(self, room_id: int | str, preset: str) -> Any:
+        """Send a preset command (view/privacy/favorite) to a room."""
+
+        command = ROOM_PRESETS.get(preset.lower())
+        if command is None:
+            raise NormanBlindsApiError(f"Unknown preset '{preset}'. Allowed: {list(ROOM_PRESETS)}")
+
+        payload: dict[str, Any] = {
+            "type": command,
+            "action": 1,
+            "id": room_id,
         }
         return await self._request(REMOTE_CONTROL_ENDPOINT, payload)
 

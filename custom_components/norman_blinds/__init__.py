@@ -10,7 +10,7 @@ from .api import NormanBlindsApiClient
 from .const import CONF_HOST, CONF_PASSWORD, DEFAULT_PASSWORD, DOMAIN
 from .coordinator import NormanBlindsDataUpdateCoordinator
 
-PLATFORMS: list[Platform] = [Platform.COVER, Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.COVER, Platform.SENSOR, Platform.BUTTON]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

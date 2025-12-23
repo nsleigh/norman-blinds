@@ -27,7 +27,7 @@ async def async_setup_entry(
     data = hass.data[DOMAIN][entry.entry_id]
     coordinator: NormanBlindsDataUpdateCoordinator = data["coordinator"]
 
-    entities: list[SensorEntity] = [NormanGatewayInfoSensor(coordinator)]
+    entities: list[SensorEntity] = []
 
     def _build_entities() -> list[SensorEntity]:
         local_entities: list[SensorEntity] = []
@@ -190,49 +190,3 @@ class NormanWindowSensor(CoordinatorEntity[NormanBlindsDataUpdateCoordinator], S
             if (window.get("Id") or window.get("id")) == self._window_id:
                 return window.get(self.entity_description.key)
         return None
-
-
-class NormanGatewayInfoSensor(CoordinatorEntity[NormanBlindsDataUpdateCoordinator], SensorEntity):
-    """Sensor exposing gateway info."""
-
-    _attr_has_entity_name = True
-    _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_name = "Gateway Version"
-    _attr_icon = "mdi:home-analytics"
-
-    def __init__(self, coordinator: NormanBlindsDataUpdateCoordinator) -> None:
-        super().__init__(coordinator)
-        self._attr_unique_id = "norman_gateway_info"
-
-    @property
-    def device_info(self) -> dict[str, Any]:
-        """Return device info for the hub."""
-
-        gateway = self.coordinator.data.get("gateway") or {}
-        name = gateway.get("hubName") or "Norman Gateway"
-        sw_version = gateway.get("swVer")
-        return {
-            "identifiers": {(DOMAIN, "hub")},
-            "name": name,
-            "manufacturer": "Norman",
-            "sw_version": sw_version,
-        }
-
-    @property
-    def native_value(self) -> Any:
-        """Return software version as state."""
-
-        gateway = self.coordinator.data.get("gateway") or {}
-        return gateway.get("swVer")
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any]:
-        """Return gateway attributes."""
-
-        gateway = self.coordinator.data.get("gateway") or {}
-        attrs: dict[str, Any] = {}
-        if gateway.get("hubName"):
-            attrs["hub_name"] = gateway.get("hubName")
-        if gateway.get("hubId"):
-            attrs["hub_id"] = gateway.get("hubId")
-        return attrs
