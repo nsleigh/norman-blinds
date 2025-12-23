@@ -9,7 +9,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, LOGGER
+from .const import DOMAIN
 from .coordinator import NormanBlindsDataUpdateCoordinator
 
 PRESET_BUTTONS: list[ButtonEntityDescription] = [
@@ -52,9 +52,6 @@ async def async_setup_entry(
                     "Name": item.get("suggested_area") or window.get("roomName"),
                 }
             rooms = list(seen.values())
-            LOGGER.debug("Derived rooms from windows for preset buttons: %s", rooms)
-        else:
-            LOGGER.debug("Using coordinator rooms for preset buttons: %s", rooms)
 
         for room in rooms:
             room_id = room.get("Id") or room.get("id") or room.get("roomId")
@@ -71,8 +68,6 @@ async def async_setup_entry(
         return local_entities
 
     entities.extend(_build_entities())
-    if entities:
-        LOGGER.debug("Initial preset button entities: %s", [e.unique_id for e in entities])
     async_add_entities(entities)
 
     seen_ids: set[str] = {entity.unique_id for entity in entities if entity.unique_id}
@@ -88,7 +83,6 @@ async def async_setup_entry(
             return
 
         seen_ids.update(entity.unique_id for entity in to_add if entity.unique_id)
-        LOGGER.debug("Adding new preset button entities: %s", [e.unique_id for e in to_add])
         async_add_entities(to_add)
 
     def _handle_coordinator_update() -> None:
