@@ -117,6 +117,7 @@ class NormanBlindsApiClient:
         payload: dict[str, Any] | None = None,
         *,
         allow_reauth: bool = True,
+        allow_retry: bool = True,
     ) -> Any:
         """POST to the gateway, refreshing authentication on 401."""
 
@@ -142,7 +143,7 @@ class NormanBlindsApiClient:
                 if not allow_reauth:
                     raise NormanBlindsAuthError("Authentication failed after retry")
                 await self._login(force=True)
-                return await self._request(endpoint, payload, allow_reauth=False)
+                return await self._request(endpoint, payload, allow_reauth=False, allow_retry=allow_retry)
 
             response.raise_for_status()
             try:
@@ -156,6 +157,21 @@ class NormanBlindsApiClient:
                 data = body_text
 
             LOGGER.debug("Received response from %s: %s", endpoint, data)
+
+            # Some gateway endpoints return {"error": -2} when auth expires without an HTTP 401.
+            if isinstance(data, dict) and "error" in data:
+                error_code = data.get("error")
+                LOGGER.warning("Gateway returned error code %s for %s", error_code, endpoint)
+                if str(error_code) == "-2" and allow_retry:
+                    LOGGER.info("Retrying %s after forced login due to gateway error code -2", endpoint)
+                    await self._login(force=True)
+                    return await self._request(
+                        endpoint,
+                        payload,
+                        allow_reauth=False,
+                        allow_retry=False,
+                    )
+                raise NormanBlindsApiError(f"Gateway returned error code {error_code} for {endpoint}")
             return data
 
     async def async_get_room_info(self) -> list[dict[str, Any]]:
