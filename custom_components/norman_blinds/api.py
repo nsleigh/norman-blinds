@@ -174,7 +174,7 @@ class NormanBlindsApiClient:
                 raise NormanBlindsApiError(f"Gateway returned error code {error_code} for {endpoint}")
             return data
 
-    async def async_get_room_info(self) -> list[dict[str, Any]]:
+    async def async_get_room_info(self, *, allow_retry: bool = True) -> list[dict[str, Any]]:
         """Return rooms from the gateway."""
 
         payload = await self._request(ROOM_INFO_ENDPOINT)
@@ -185,10 +185,14 @@ class NormanBlindsApiClient:
 
         if not isinstance(rooms, list):
             LOGGER.debug("Unexpected room payload: %s", payload)
+            if allow_retry:
+                LOGGER.info("Retrying room fetch after forcing login due to malformed payload")
+                await self._login(force=True)
+                return await self.async_get_room_info(allow_retry=False)
             raise NormanBlindsApiError("Malformed room data from gateway")
         return rooms
 
-    async def async_get_window_info(self) -> list[dict[str, Any]]:
+    async def async_get_window_info(self, *, allow_retry: bool = True) -> list[dict[str, Any]]:
         """Return windows from the gateway."""
 
         payload = await self._request(WINDOW_INFO_ENDPOINT)
@@ -199,6 +203,10 @@ class NormanBlindsApiClient:
 
         if not isinstance(windows, list):
             LOGGER.debug("Unexpected window payload: %s", payload)
+            if allow_retry:
+                LOGGER.info("Retrying window fetch after forcing login due to malformed payload")
+                await self._login(force=True)
+                return await self.async_get_window_info(allow_retry=False)
             raise NormanBlindsApiError("Malformed window data from gateway")
         return windows
 
