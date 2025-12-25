@@ -7,7 +7,11 @@
 
 ![Norman Blinds Logo](images/logo@2x.png)
 
-Reverse engineering the Norman Blinds hub protocol
+Reverse engineering the Norman Blinds hub protocol to create a Home Assistant integration. 
+
+If you stumble across this and want help setting it up raise an issue. I am not sure how useful it is so haven't made it HACS compatible. 
+
+All the HA code for this was generated with AI (codex), it works but might not be best practice. 
 
 ## Linking hub to blinds 
 
