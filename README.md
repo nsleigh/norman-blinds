@@ -9,6 +9,8 @@
 
 Reverse engineering the Norman Blinds hub protocol
 
+## Linking hub to blinds 
+
 Process to reset and detect blinds (this worked when other methods didn't)
 
 - On hub press for 3 seconds in to user setting mode
