@@ -93,7 +93,7 @@ POST: http://NORMANHUB_9DDD2D.local/cgi-bin/cgi/RemoteControl \
 #### Blind control
 
 ```json
-{ "type":"window", "id":<blind id>, "action":<position>, "model":1 }
+{ "type":"window", "id":"<blind id>", "action":"<position>", "model":1 }
 ```
 
 |Position|Description|
@@ -112,7 +112,7 @@ Other position values seem to be the same as 0.
 #### Room control
 
 ```json
-{ "type":"level", "id":<room id>, "action":<position>, "model":1 }
+{ "type":"level", "id":"<room id>", "action":"<position>", "model":1 }
 ```
 
 ### getRoomInfo
