@@ -5,7 +5,7 @@
 ![GitHub all releases](https://img.shields.io/github/downloads/nsleigh/norman_blinds/total)
 ![GitHub release (latest by SemVer)](https://img.shields.io/github/downloads/nsleigh/norman_blinds/latest/total)
 
-![Norman Blinds Logo](custom_components/norman_blinds/branding/logo@2x.png)
+![Norman Blinds Logo](custom_components/norman_blinds/brand/logo@2x.png)
 
 Reverse engineering the Norman Blinds hub protocol to create a Home Assistant integration. 
 
