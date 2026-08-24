@@ -115,6 +115,20 @@ Other position values seem to be the same as 0.
 { "type":"level", "id":"<room id>", "action":"<position>", "model":1 }
 ```
 
+#### Remote control with room ID
+
+```json
+{ "type":"fullopen", "action":"2", "id":"<room id>" }
+```
+
+```json
+{ "type":"fullclose", "action":"2", "id":"<room id>" }
+```
+
+```json
+{ "type":"Favorite", "action":"2", "id":"<room id>" }
+```
+
 ### getRoomInfo
 
 (Needs GatewayLogin first - may need AdminLogin) \
