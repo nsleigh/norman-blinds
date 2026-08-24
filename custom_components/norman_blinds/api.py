@@ -286,7 +286,7 @@ class NormanBlindsApiClient:
 
         payload: dict[str, Any] = {
             "type": command,
-            "action": 1,
+            "action": 2,
             "id": room_id,
         }
         return await self._request(REMOTE_CONTROL_ENDPOINT, payload)
