@@ -7,7 +7,6 @@ from typing import Any
 from homeassistant.components.cover import CoverDeviceClass, CoverEntity, CoverEntityFeature
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.const import ATTR_VIA_DEVICE
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -262,7 +261,7 @@ class NormanBlindsCover(CoordinatorEntity[NormanBlindsDataUpdateCoordinator], Co
             "identifiers": {(DOMAIN, f"window_{self._window_id}")} if self._window_id is not None else {(DOMAIN, f"window_{self._attr_name}")},
             "name": device_name,
             "manufacturer": "Norman",
-            ATTR_VIA_DEVICE: (DOMAIN, "hub"),
+            "via_device": (DOMAIN, "hub"),
         }
 
         self._attr_current_cover_position: int | None = None
