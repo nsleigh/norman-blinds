@@ -1,6 +1,6 @@
 # Norman Blinds
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Default-gren.svg)](https://github.com/custom-components/hacs)
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 ![version](https://img.shields.io/github/v/release/nsleigh/norman-blinds)
 ![GitHub all releases](https://img.shields.io/github/downloads/nsleigh/norman-blinds/total)
 ![GitHub release (latest by SemVer)](https://img.shields.io/github/downloads/nsleigh/norman-blinds/latest/total)
@@ -9,9 +9,25 @@
 
 Reverse engineering the Norman Blinds hub protocol to create a Home Assistant integration. 
 
-If you stumble across this and want help setting it up raise an issue. I am not sure how useful it is so haven't made it HACS compatible. 
+If you stumble across this and want help setting it up raise an issue.
 
 All the HA code for this was generated with AI (codex), it works but might not be best practice. 
+
+## Installation
+
+### HACS (custom repository)
+
+1. In Home Assistant, open **HACS**.
+2. Open the three-dot menu (top right) and choose **Custom repositories**.
+3. Add `https://github.com/nsleigh/norman-blinds` with type **Integration**.
+4. Search for **Norman Blinds** in HACS, download it, then restart Home Assistant.
+5. Go to **Settings → Devices & services → Add integration** and search for **Norman Blinds**.
+
+Requires Home Assistant 2026.1.0 or later.
+
+### Manual
+
+Copy `custom_components/norman_blinds` into your Home Assistant `config/custom_components/` directory, restart Home Assistant, then add the integration from **Settings → Devices & services**.
 
 ## Linking hub to blinds 
 
