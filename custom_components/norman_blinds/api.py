@@ -4,14 +4,16 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from aiohttp import ClientSession, ClientTimeout
+from aiohttp import ClientConnectionError, ClientResponseError, ClientSession, ClientTimeout
 
 from .const import (
     ALLOWED_POSITIONS,
     DEFAULT_APP_VERSION,
     DEFAULT_REQUEST_TIMEOUT,
     LOGGER,
+    LOGIN_ATTEMPTS,
     LOGIN_ENDPOINT,
+    LOGIN_RETRY_DELAY,
     REMOTE_CONTROL_ENDPOINT,
     REMOTE_CONTROL_MODEL,
     ROOM_PRESETS,
@@ -66,44 +68,77 @@ class NormanBlindsApiClient:
             if self._logged_in and not force:
                 return
 
-            url = self._build_url(LOGIN_ENDPOINT)
-            payload: dict[str, Any] = {"password": self._password, "app_version": self._app_version}
-            masked_payload = {**payload, "password": "***"}
-            LOGGER.debug("Posting login payload to %s: %s", url, masked_payload)
+            # A forced login means the current session is known to be dead; don't
+            # reuse it if this login fails.
+            self._logged_in = False
 
-            async with self._session.post(url, json=payload, timeout=self._timeout) as response:
-                if response.status in (401, 403):
-                    raise NormanBlindsAuthError("Invalid credentials for Norman gateway")
-                response.raise_for_status()
-                login_body = await response.text()
-                LOGGER.debug(
-                    "Login response status: %s, headers: %s, body: %s",
-                    response.status,
-                    dict(response.headers),
-                    login_body,
-                )
-                login_data: Any | None = None
+            for attempt in range(1, LOGIN_ATTEMPTS + 1):
                 try:
-                    login_data = await response.json(content_type=None)
-                except Exception:  # pylint: disable=broad-except
-                    login_data = None
+                    await self._post_login()
+                    return
+                except ClientResponseError as err:
+                    if err.status < 500 or attempt == LOGIN_ATTEMPTS:
+                        raise
+                    LOGGER.debug(
+                        "Login attempt %s/%s failed with HTTP %s, retrying in %ss",
+                        attempt,
+                        LOGIN_ATTEMPTS,
+                        err.status,
+                        LOGIN_RETRY_DELAY,
+                    )
+                except (ClientConnectionError, asyncio.TimeoutError) as err:
+                    if attempt == LOGIN_ATTEMPTS:
+                        raise
+                    LOGGER.debug(
+                        "Login attempt %s/%s failed (%r), retrying in %ss",
+                        attempt,
+                        LOGIN_ATTEMPTS,
+                        err,
+                        LOGIN_RETRY_DELAY,
+                    )
+                await asyncio.sleep(LOGIN_RETRY_DELAY)
 
-                if isinstance(login_data, dict):
-                    error_code = login_data.get("errorCode", 0)
-                    if error_code not in (None, 0, "0"):
-                        raise NormanBlindsAuthError(f"Login failed, errorCode: {error_code}")
-                    self._gateway_info = {
-                        "hubName": login_data.get("hubName"),
-                        "hubId": login_data.get("hubId"),
-                        "swVer": login_data.get("swVer"),
-                    }
+    async def _post_login(self) -> None:
+        """Send a single login request. Caller must hold the login lock."""
 
-                self._logged_in = True
-                LOGGER.debug(
-                    "Login succeeded with app_version %s, session cookie jar keys: %s",
-                    self._app_version,
-                    list(response.cookies.keys()),
-                )
+        url = self._build_url(LOGIN_ENDPOINT)
+        payload: dict[str, Any] = {"password": self._password, "app_version": self._app_version}
+        masked_payload = {**payload, "password": "***"}
+        LOGGER.debug("Posting login payload to %s: %s", url, masked_payload)
+
+        async with self._session.post(url, json=payload, timeout=self._timeout) as response:
+            if response.status in (401, 403):
+                raise NormanBlindsAuthError("Invalid credentials for Norman gateway")
+            response.raise_for_status()
+            login_body = await response.text()
+            LOGGER.debug(
+                "Login response status: %s, headers: %s, body: %s",
+                response.status,
+                dict(response.headers),
+                login_body,
+            )
+            login_data: Any | None = None
+            try:
+                login_data = await response.json(content_type=None)
+            except Exception:  # pylint: disable=broad-except
+                login_data = None
+
+            if isinstance(login_data, dict):
+                error_code = login_data.get("errorCode", 0)
+                if error_code not in (None, 0, "0"):
+                    raise NormanBlindsAuthError(f"Login failed, errorCode: {error_code}")
+                self._gateway_info = {
+                    "hubName": login_data.get("hubName"),
+                    "hubId": login_data.get("hubId"),
+                    "swVer": login_data.get("swVer"),
+                }
+
+            self._logged_in = True
+            LOGGER.debug(
+                "Login succeeded with app_version %s, session cookie jar keys: %s",
+                self._app_version,
+                list(response.cookies.keys()),
+            )
 
     async def _ensure_login(self) -> None:
         """Log in if we do not already have cookies."""

@@ -11,6 +11,9 @@ LOGGER = logging.getLogger(__package__)
 DEFAULT_SCAN_INTERVAL = timedelta(seconds=30)
 DEFAULT_REQUEST_TIMEOUT = 10
 DEFAULT_REFRESH_DELAY = 5  # seconds delay before requesting refresh after a command
+LOGIN_ATTEMPTS = 3  # total login attempts on 5xx/connection/timeout errors
+LOGIN_RETRY_DELAY = 5  # seconds between login attempts
+MAX_TOLERATED_UPDATE_FAILURES = 2  # consecutive failed polls served from cached data
 
 DEFAULT_APP_VERSION = "2.11.21"
 DEFAULT_PASSWORD = "123456789"
