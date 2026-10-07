@@ -36,3 +36,5 @@ Standard HA integration layering — `__init__.py` wires these together at `asyn
 ## Versioning
 
 Bump `version` in `manifest.json` when making a release-worthy change (see recent commit history for the pattern, e.g. `6a093b2 Bump version to 0.3.0`).
+
+Releases are tagged `vX.Y.Z` on the release commit and published as a GitHub release (`gh release create`) with notes in the "## Changes since vPREV" bullet style; HACS picks up new versions from the release. From v0.3.5 on, use annotated tags (`git tag -a vX.Y.Z -m "vX.Y.Z"`), not lightweight ones. v0.3.4 and earlier are lightweight and are left as they are.
