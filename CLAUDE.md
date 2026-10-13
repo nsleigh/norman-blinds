@@ -15,6 +15,7 @@ The hub's undocumented HTTP API is fully documented in README.md, including requ
 Key quirks of the hub API that shape the code:
 - Auth is cookie-session based via `GatewayLogin` with a fixed password (`123456789` unless changed) — not a real credential.
 - The hub sometimes returns HTTP 401 on session expiry, but other times returns HTTP 200 with `{"error": -2}` in the body instead. `api.py`'s `_request` handles both by forcing re-login and retrying once.
+- During its scheduled jobs the hub may answer `GatewayLogin` with HTTP 500, or with HTTP 200 and `{"errorCode": -15}`. Both are transient: login retries them (`TRANSIENT_LOGIN_ERROR_CODES` in const.py) and they must never surface as `NormanBlindsAuthError`, which would stop polling and force a reauth.
 - Blind/room position values are inverted and quantized: the wire protocol's `position`/`action` is 0 (open) to 100 (closed) in fixed steps (`ALLOWED_POSITIONS` in const.py: 100, 81, 65, 50, 37, 25, 12, 0). Home Assistant's `CoverEntity` convention is the opposite (0 = closed, 100 = open), so the entity layer converts and snaps to the nearest allowed step (`_normalize_position` in cover.py).
 - Room-level "preset" commands (`view`/`privacy`/`favorite`) map to distinct wire command types (`fullopen`/`fullclose`/`Favorite`) — see `ROOM_PRESETS` in const.py — and are separate from plain position commands (`type: "level"` for rooms, `type: "window"` for individual blinds).
 

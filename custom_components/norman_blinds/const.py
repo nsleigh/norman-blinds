@@ -14,6 +14,8 @@ DEFAULT_REFRESH_DELAY = 5  # seconds delay before requesting refresh after a com
 LOGIN_ATTEMPTS = 3  # total login attempts on 5xx/connection/timeout errors
 LOGIN_RETRY_DELAY = 5  # seconds between login attempts
 MAX_TOLERATED_UPDATE_FAILURES = 2  # consecutive failed polls served from cached data
+# GatewayLogin errorCodes the hub returns (with HTTP 200) while busy with a scheduled job
+TRANSIENT_LOGIN_ERROR_CODES: frozenset[int] = frozenset({-15})
 
 DEFAULT_APP_VERSION = "2.11.21"
 DEFAULT_PASSWORD = "123456789"

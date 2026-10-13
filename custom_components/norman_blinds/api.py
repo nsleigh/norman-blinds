@@ -19,6 +19,7 @@ from .const import (
     ROOM_PRESETS,
     ROOM_REMOTE_CONTROL_LID,
     ROOM_INFO_ENDPOINT,
+    TRANSIENT_LOGIN_ERROR_CODES,
     WINDOW_INFO_ENDPOINT,
 )
 
@@ -29,6 +30,10 @@ class NormanBlindsApiError(Exception):
 
 class NormanBlindsAuthError(NormanBlindsApiError):
     """Raised when authentication fails."""
+
+
+class NormanBlindsGatewayBusyError(NormanBlindsApiError):
+    """Raised when the gateway temporarily refuses login (e.g. during a scheduled job)."""
 
 
 class NormanBlindsApiClient:
@@ -86,7 +91,11 @@ class NormanBlindsApiClient:
                         err.status,
                         LOGIN_RETRY_DELAY,
                     )
-                except (ClientConnectionError, asyncio.TimeoutError) as err:
+                except (
+                    ClientConnectionError,
+                    asyncio.TimeoutError,
+                    NormanBlindsGatewayBusyError,
+                ) as err:
                     if attempt == LOGIN_ATTEMPTS:
                         raise
                     LOGGER.debug(
@@ -126,6 +135,14 @@ class NormanBlindsApiClient:
             if isinstance(login_data, dict):
                 error_code = login_data.get("errorCode", 0)
                 if error_code not in (None, 0, "0"):
+                    try:
+                        transient = int(error_code) in TRANSIENT_LOGIN_ERROR_CODES
+                    except (TypeError, ValueError):
+                        transient = False
+                    if transient:
+                        raise NormanBlindsGatewayBusyError(
+                            f"Gateway busy, login errorCode: {error_code}"
+                        )
                     raise NormanBlindsAuthError(f"Login failed, errorCode: {error_code}")
                 self._gateway_info = {
                     "hubName": login_data.get("hubName"),
