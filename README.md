@@ -118,9 +118,9 @@ POST: http://NORMANHUB_9DDD2D.local/cgi-bin/cgi/RemoteControl \
 |--------|-----------|
 |100|Fully closed (up)|
 |81||
-|65|Nearly fully open|
+|65|Favourite (35% open in HA)|
 |50||
-|37|Like favourite|
+|37|Open (63% open in HA, the integration's Open)|
 |25||
 |12||
 |0|Nearly fully closed (down)|

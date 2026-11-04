@@ -333,7 +333,7 @@ Use **`Lid: 3`** for a whole room. `Lid: 9` (sent by this integration up to v0.3
 |--------|-----------|---------------------------|
 | `fullopen` | View | `button.<room>_view` |
 | `fullclose` | Privacy | `button.<room>_privacy` |
-| `Favorite` | Favourite (capital F) | `button.<room>_favorite`, but from v0.3.9 it sends a `level` command with `Lid: 3` to the **Favorite position** option (default `37`) instead, because the hub doesn't record `Favorite` |
+| `Favorite` | Favourite (capital F) | `button.<room>_favorite`, but from v0.3.9 it sends a `level` command with `Lid: 3` to the **Favorite position** option (default `65`) instead, because the hub doesn't record `Favorite` |
 
 The hub replies `{"Favorite": "ok"}` (keyed by the command type) rather than `{"remote": "ok"}`. **[observed]**
 
@@ -371,13 +371,13 @@ Inferred from the 6 blinds on this hub, not tested: **[inferred]**
 
 The wire `position` / `action` is on the hub's own scale, `0`–`100`. Only these values are reliable, and other values behave like `0`:
 
-| Value | README observation (this hub) |
+| Value | On this hub (Living Room, checked 2026-11-04) |
 |-------|-------------------------------|
 | `100` | Fully closed (up) |
 | `81` | |
-| `65` | Nearly fully open |
+| `65` | Favourite. The hub's own `Favorite` moves the blinds here (35% open in HA). |
 | `50` | |
-| `37` | Like Favourite. This integration's "open" target. |
+| `37` | Open. This integration's "open" target (63% open in HA). |
 | `25` | |
 | `12` | |
 | `0` | Nearly fully closed (down) |
