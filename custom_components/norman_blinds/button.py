@@ -1,6 +1,7 @@
 """Button platform for Norman Blinds room presets."""
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
@@ -9,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import DEFAULT_REFRESH_DELAY, DOMAIN
 from .coordinator import NormanBlindsDataUpdateCoordinator
 
 PRESET_BUTTONS: list[ButtonEntityDescription] = [
@@ -155,3 +156,10 @@ class NormanBlindsRoomPresetButton(
         await self.coordinator.api.async_set_room_preset(
             self._room_id, self.entity_description.key
         )
+        self.coordinator.hass.async_create_task(self._delayed_refresh())
+
+    async def _delayed_refresh(self) -> None:
+        """Refresh after a small delay so the blinds' new positions show up."""
+
+        await asyncio.sleep(DEFAULT_REFRESH_DELAY)
+        await self.coordinator.async_request_refresh()
