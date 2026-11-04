@@ -38,6 +38,12 @@ ROOM_REMOTE_CONTROL_LID = 3
 ALLOWED_POSITIONS: tuple[int, ...] = (100, 81, 65, 50, 37, 25, 12, 0)
 SOLAR_NO_READING = 65535  # 0xFFFF: the blind reports no solar reading
 
+# The hub's own "Favorite" command moves the blinds but doesn't record the new
+# positions, so HA would show the old state. The Favorite button sends a room
+# position command (Lid 3) to this hub-scale position instead. 37 = 63% open.
+CONF_FAVORITE_POSITION = "favorite_position"
+DEFAULT_FAVORITE_POSITION = 37
+
 # Room preset commands
 ROOM_PRESETS = {
     "view": "fullopen",      # open

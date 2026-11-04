@@ -40,5 +40,16 @@
         "name": "Favorite"
       }
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Norman Blinds options",
+        "description": "The position the room Favorite buttons move blinds to. The hub's own Favorite command doesn't record where the blinds went, so HA would show the wrong position; these buttons send a position command instead. Set this to match your favourite position in the Norman app.",
+        "data": {
+          "favorite_position": "Favorite position"
+        }
+      }
+    }
   }
 }

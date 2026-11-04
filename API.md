@@ -333,7 +333,7 @@ Use **`Lid: 3`** for a whole room. `Lid: 9` (sent by this integration up to v0.3
 |--------|-----------|---------------------------|
 | `fullopen` | View | `button.<room>_view` |
 | `fullclose` | Privacy | `button.<room>_privacy` |
-| `Favorite` | Favourite (capital F) | `button.<room>_favorite` |
+| `Favorite` | Favourite (capital F) | `button.<room>_favorite`, but from v0.3.9 it sends a `level` command with `Lid: 3` to the **Favorite position** option (default `37`) instead, because the hub doesn't record `Favorite` |
 
 The hub replies `{"Favorite": "ok"}` (keyed by the command type) rather than `{"remote": "ok"}`. **[observed]**
 
