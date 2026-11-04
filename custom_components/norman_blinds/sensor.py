@@ -7,6 +7,7 @@ from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
+    SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -15,7 +16,7 @@ from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import DOMAIN, SOLAR_NO_READING
 from .coordinator import NormanBlindsDataUpdateCoordinator
 
 
@@ -63,6 +64,7 @@ WINDOW_SENSORS: list[SensorEntityDescription] = [
     SensorEntityDescription(
         key="battery",
         name="Battery",
+        state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.BATTERY,
         native_unit_of_measurement=PERCENTAGE,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -70,6 +72,7 @@ WINDOW_SENSORS: list[SensorEntityDescription] = [
     SensorEntityDescription(
         key="Rssi",
         name="Signal Strength",
+        state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.SIGNAL_STRENGTH,
         native_unit_of_measurement=SIGNAL_STRENGTH_DECIBELS,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -78,6 +81,7 @@ WINDOW_SENSORS: list[SensorEntityDescription] = [
     SensorEntityDescription(
         key="temp",
         name="Temperature",
+        state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.TEMPERATURE,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -85,11 +89,13 @@ WINDOW_SENSORS: list[SensorEntityDescription] = [
     SensorEntityDescription(
         key="position",
         name="Position",
+        state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
     ),
     SensorEntityDescription(
         key="solar",
         name="Solar",
+        state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SensorEntityDescription(
@@ -188,5 +194,8 @@ class NormanWindowSensor(CoordinatorEntity[NormanBlindsDataUpdateCoordinator], S
         for item in windows:
             window = item.get("window") or {}
             if (window.get("Id") or window.get("id")) == self._window_id:
-                return window.get(self.entity_description.key)
+                value = window.get(self.entity_description.key)
+                if self.entity_description.key == "solar" and str(value) == str(SOLAR_NO_READING):
+                    return None
+                return value
         return None
