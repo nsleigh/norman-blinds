@@ -11,11 +11,16 @@ LOGGER = logging.getLogger(__package__)
 DEFAULT_SCAN_INTERVAL = timedelta(seconds=30)
 DEFAULT_REQUEST_TIMEOUT = 10
 DEFAULT_REFRESH_DELAY = 5  # seconds delay before requesting refresh after a command
+ROOM_LEVEL_COMMAND_DELAY = 1  # seconds between per-level room commands
 LOGIN_ATTEMPTS = 3  # total login attempts on 5xx/connection/timeout errors
 LOGIN_RETRY_DELAY = 5  # seconds between login attempts
 MAX_TOLERATED_UPDATE_FAILURES = 2  # consecutive failed polls served from cached data
-# GatewayLogin errorCodes the hub returns (with HTTP 200) while busy with a scheduled job
-TRANSIENT_LOGIN_ERROR_CODES: frozenset[int] = frozenset({-15})
+# GatewayLogin errorCodes (with HTTP 200) that mean the credentials/session were
+# rejected -- a genuine auth failure. Every other nonzero login errorCode is
+# treated as the hub being transiently busy (e.g. a scheduled job) and is ridden
+# out with cached data, rather than enumerating transient codes (-12, -15, ...)
+# which the hub keeps inventing.
+AUTH_LOGIN_ERROR_CODES: frozenset[int] = frozenset({-13})
 
 DEFAULT_APP_VERSION = "2.11.21"
 DEFAULT_PASSWORD = "123456789"
