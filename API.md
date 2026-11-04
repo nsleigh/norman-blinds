@@ -395,7 +395,7 @@ Use **`Lid: 3`** for a whole room. `Lid: 9` (sent by this integration up to v0.3
 |--------|-----------|---------------------------|
 | `fullopen` | View | `button.<room>_view` |
 | `fullclose` | Privacy | `button.<room>_privacy` |
-| `Favorite` | Favourite (capital F) | `button.<room>_favorite`, but from v0.3.9 it sends a `level` command with `Lid: 3` to the **Favorite position** option (default `65`) instead, because the hub doesn't record `Favorite` |
+| `Favorite` | Favourite (capital F) | `button.<room>_favorite`. From v0.3.11 it sends `Favorite`, then 20 s later a `level` command with `Lid: 3` to the **Favorite position** option (default `65`), because the hub doesn't record `Favorite`. The blinds are already there, so the second step only records the position. Any later command to the room cancels it. |
 
 The hub replies `{"Favorite": "ok"}` (keyed by the command type) rather than `{"remote": "ok"}`. **[observed]**
 
@@ -502,6 +502,7 @@ Up to v0.3.7, this integration treated only `-15` as transient on login and ever
   | `window` | Not checked |
 
 - **Resyncing wrong positions.** If the reported positions don't match the blinds, send the room's real position as a `level` command with `Lid: 3` (for example `100` if the blinds are closed). The blinds don't move if they're already there, and the hub records the position. **[observed]**
+- **A motor can be missing from a group.** On this hub, Study Right (`ab36`) is listed in the Study's All group (`level[3] == 1`) but ignored `Lid: 3` twice, while it moved for `Lid: 2` (Right) and for the hub's `Favorite`. So the hub's group data and a motor's actual group membership can disagree. Re-adding the blind to the room in the Norman app should fix it (not yet tried). **[observed]**
 - **Stale readings.** `solar` is `65535` when there's no reading. Some blinds don't report `Rssi` at all. **[observed]**
 
 ---

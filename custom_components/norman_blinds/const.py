@@ -38,12 +38,15 @@ ROOM_REMOTE_CONTROL_LID = 3
 ALLOWED_POSITIONS: tuple[int, ...] = (100, 81, 65, 50, 37, 25, 12, 0)
 SOLAR_NO_READING = 65535  # 0xFFFF: the blind reports no solar reading
 
-# The hub's own "Favorite" command moves the blinds but doesn't record the new
-# positions, so HA would show the old state. The Favorite button sends a room
-# position command (Lid 3) to this hub-scale position instead. 65 = 35% open,
-# which matches where the hub's own Favorite puts the blinds here.
+# The hub's own "Favorite" command moves every blind to the favourite stored in
+# its motor, but doesn't record the new positions, so HA would show the old
+# state. The Favorite button sends the hub's Favorite, waits for the blinds to
+# stop, then sends a room position command (Lid 3) to this hub-scale position.
+# The blinds are already there, so nothing moves; the hub just records it.
+# 65 = 35% open, which matches the motors' favourite here.
 CONF_FAVORITE_POSITION = "favorite_position"
 DEFAULT_FAVORITE_POSITION = 65
+FAVORITE_RECORD_DELAY = 20  # seconds between the hub's Favorite and recording it
 
 # Room preset commands
 ROOM_PRESETS = {

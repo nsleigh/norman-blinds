@@ -14,6 +14,7 @@ from .const import (
     CONF_FAVORITE_POSITION,
     DEFAULT_FAVORITE_POSITION,
     DEFAULT_REFRESH_DELAY,
+    FAVORITE_RECORD_DELAY,
     DOMAIN,
 )
 from .coordinator import NormanBlindsDataUpdateCoordinator
@@ -162,19 +163,21 @@ class NormanBlindsRoomPresetButton(
         if self._room_id is None:
             return
         if self.entity_description.key == "favorite":
-            # A position command, so the hub records where the blinds went.
+            # The hub's Favorite, then a recorded position once the blinds stop.
             position = int(
                 self._entry.options.get(CONF_FAVORITE_POSITION, DEFAULT_FAVORITE_POSITION)
             )
-            await self.coordinator.api.async_set_room_position(self._room_id, position)
+            await self.coordinator.api.async_room_favorite(self._room_id, position)
+            delay = FAVORITE_RECORD_DELAY + DEFAULT_REFRESH_DELAY
         else:
             await self.coordinator.api.async_set_room_preset(
                 self._room_id, self.entity_description.key
             )
-        self.coordinator.hass.async_create_task(self._delayed_refresh())
+            delay = DEFAULT_REFRESH_DELAY
+        self.coordinator.hass.async_create_task(self._delayed_refresh(delay))
 
-    async def _delayed_refresh(self) -> None:
-        """Refresh after a small delay so the blinds' new positions show up."""
+    async def _delayed_refresh(self, delay: float = DEFAULT_REFRESH_DELAY) -> None:
+        """Refresh after a delay so the blinds' new positions show up."""
 
-        await asyncio.sleep(DEFAULT_REFRESH_DELAY)
+        await asyncio.sleep(delay)
         await self.coordinator.async_request_refresh()
