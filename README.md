@@ -44,6 +44,8 @@ Other
 
 ## API
 
+For the full reference — field meanings, the room/group/level data model, error codes and hub quirks — see [API.md](API.md). The examples below are the quick version.
+
 ### GatewayLogin
 
 POST: http://NORMANHUB_9DDD2D.local/cgi-bin/cgi/GatewayLogin \
