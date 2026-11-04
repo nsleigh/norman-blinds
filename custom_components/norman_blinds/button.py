@@ -10,7 +10,12 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DEFAULT_REFRESH_DELAY, DOMAIN
+from .const import (
+    CONF_FAVORITE_POSITION,
+    DEFAULT_FAVORITE_POSITION,
+    DEFAULT_REFRESH_DELAY,
+    DOMAIN,
+)
 from .coordinator import NormanBlindsDataUpdateCoordinator
 
 PRESET_BUTTONS: list[ButtonEntityDescription] = [
@@ -61,6 +66,7 @@ async def async_setup_entry(
                 local_entities.append(
                     NormanBlindsRoomPresetButton(
                         coordinator=coordinator,
+                        entry=entry,
                         room_id=room_id,
                         room_name=room_name,
                         description=desc,
@@ -102,11 +108,13 @@ class NormanBlindsRoomPresetButton(
     def __init__(
         self,
         coordinator: NormanBlindsDataUpdateCoordinator,
+        entry: ConfigEntry,
         room_id: Any,
         room_name: str | None,
         description: ButtonEntityDescription,
     ) -> None:
         super().__init__(coordinator)
+        self._entry = entry
         self.entity_description = description
         self._room_id = room_id
         self._room_name = room_name or "Room"
@@ -153,9 +161,16 @@ class NormanBlindsRoomPresetButton(
 
         if self._room_id is None:
             return
-        await self.coordinator.api.async_set_room_preset(
-            self._room_id, self.entity_description.key
-        )
+        if self.entity_description.key == "favorite":
+            # A position command, so the hub records where the blinds went.
+            position = int(
+                self._entry.options.get(CONF_FAVORITE_POSITION, DEFAULT_FAVORITE_POSITION)
+            )
+            await self.coordinator.api.async_set_room_position(self._room_id, position)
+        else:
+            await self.coordinator.api.async_set_room_preset(
+                self._room_id, self.entity_description.key
+            )
         self.coordinator.hass.async_create_task(self._delayed_refresh())
 
     async def _delayed_refresh(self) -> None:
