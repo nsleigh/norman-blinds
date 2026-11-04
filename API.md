@@ -246,7 +246,7 @@ The wrapper is `{ "totalWindow": 6, "windows": [ … ] }`.
 | `Name` | Name set in the app. The default is `Id <last 4 hex digits of the motor ID>`. |
 | `RId`, `roomId` | The ID of the blind's room. Both carry the same value. |
 | `Level` | A single number (`0` for every blind here). The reference client sends it as `Lid` in `level` commands, but on this hub `Lid` turned out to be a `groupname` slot, so `Lid: 0` moves only the Left group. Its meaning is unknown; it may number the panel tier on stacked shutters. **[observed] [ref]** |
-| `level` | A 5-element array: which of the room's `groupname` slots this blind belongs to. **[inferred]** |
+| `level` | A 5-element array: which of the room's `groupname` slots this blind belongs to. Confirmed by test: `Lid` 0, 1 and 2 each moved exactly the blinds with that slot set. **[observed]** |
 | `levelsort` | A 5-element array: the blind's position within each group it belongs to. **[inferred]** |
 | `groupId` | `level` packed into a bitmask: bit *n* is set when `level[n] == 1`. **[inferred]** |
 | `position` | Current position, `0`–`100`, on the hub's scale. See [Positions](#positions). |
@@ -351,13 +351,16 @@ Hub
           └─ Level           0 here; meaning unknown (not the Lid to send)
 ```
 
-The following is **[inferred]** from the 6 blinds on this hub:
+Confirmed by the `Lid` tests on the Living Room (2026-11-04): **[observed]**
 
 - Each room has five group slots: `Left`, `Middle`, `Right`, `All`, `group5`.
 - Every blind is in exactly one of Left, Middle or Right, and also in **All** (slot 3).
+- The slot numbers are what `Lid` selects in `level` commands (`0` Left … `3` All).
+
+Inferred from the 6 blinds on this hub, not tested: **[inferred]**
+
 - `groupId` encodes the same membership as a bitmask: `9` = `0b01001` (Left + All), `10` = `0b01010` (Middle + All), `12` = `0b01100` (Right + All).
 - `levelsort` gives each blind's order within a group. In its own group (Left, Middle or Right) every blind is `1`. In All (slot 3) the order is Middle `1`, Left `2`, Right `3` in both rooms, which isn't left-to-right. It may be the order the blinds were paired in.
-- The same slot numbers are what `Lid` selects in `level` commands (`0` Left … `3` All). **[observed]**
 - `Level` is `0` everywhere here. On hubs with stacked shutters it probably numbers the panel tier, but that's unconfirmed.
 
 ---
@@ -420,7 +423,16 @@ Up to v0.3.7, this integration treated only `-15` as transient on login and ever
 - **The CGI can lock up.** Cherokee can still be running a failed CGI request after it has sent the response headers. Read the whole response body before starting the next request, so that requests never overlap. **[ref]**
 - **Rapid commands.** The reference client spaces multi-command room moves 1 s apart, for reliability across firmware variants. **[ref]**
 - **No push.** The hub never pushes state changes. After sending a command, wait about 5 s and then poll `getWindowInfo`. **[observed]**
-- **Positions are the last command, not a measurement.** The blinds don't report where they are. `getWindowInfo.position` is whatever the hub last commanded, and only for commands it records (`Lid: 9` isn't recorded). Moving a blind any other way, such as by hand, leaves the reported position wrong. **[observed]**
+- **Positions are the last command, not a measurement.** The blinds don't report where they are. `getWindowInfo.position` is whatever the hub last commanded, and only for commands it records. Moving a blind any other way, such as by hand, leaves the reported position wrong. **[observed]**
+
+  | Command | Hub records the new position? |
+  |---------|-------------------------------|
+  | `level` with `Lid` 0–3 | Yes **[observed]** |
+  | `level` with `Lid: 9` | No **[observed]** |
+  | `fullopen` (View) | Yes **[observed]**: `cover.study` changed to open 19 s after View was pressed |
+  | `fullclose`, `Favorite`, `window` | Not checked |
+
+- **Resyncing wrong positions.** If the reported positions don't match the blinds, send the room's real position as a `level` command with `Lid: 3` (for example `100` if the blinds are closed). The blinds don't move if they're already there, and the hub records the position. **[observed]**
 - **Stale readings.** `solar` is `65535` when there's no reading. Some blinds don't report `Rssi` at all. **[observed]**
 
 ---
@@ -432,3 +444,4 @@ Up to v0.3.7, this integration treated only `-15` as transient on login and ever
 3. **What do `errorCode: -12` and `-13` mean exactly?** The app's error strings would answer this, but the app is iOS-only and App Store builds are encrypted, so they can't be read from the app itself. Capturing the app's plain-HTTP traffic is the way forward.
 4. **Endpoints that aren't documented yet.** The app has schedules, scenes, sunrise/sunset timers, and hub settings and firmware screens, so there must be more endpoints than the ones above. Capturing traffic while using each app screen would reveal them, and might also explain the scheduled session drops (the hub may be running its own timers).
 5. **The meaning of `initiated`, `admin`, `leave` and `version_control`** in the login response.
+6. **Do `fullclose`, `Favorite` and `type: "window"` record positions?** Check by sending each one and comparing `getWindowInfo.position` before and after. If one doesn't, HA will show the wrong state after using it, as it did with `Lid: 9`.
