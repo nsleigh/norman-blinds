@@ -28,6 +28,7 @@ REMOTE_CONTROL_ENDPOINT = "/cgi-bin/cgi/RemoteControl"
 REMOTE_CONTROL_MODEL = 1
 ROOM_REMOTE_CONTROL_LID = 9
 ALLOWED_POSITIONS: tuple[int, ...] = (100, 81, 65, 50, 37, 25, 12, 0)
+SOLAR_NO_READING = 65535  # 0xFFFF: the blind reports no solar reading
 
 # Room preset commands
 ROOM_PRESETS = {
