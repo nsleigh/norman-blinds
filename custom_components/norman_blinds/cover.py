@@ -10,13 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import (
-    ALLOWED_POSITIONS,
-    DEFAULT_REFRESH_DELAY,
-    DOMAIN,
-    LOGGER,
-    ROOM_LEVEL_COMMAND_DELAY,
-)
+from .const import ALLOWED_POSITIONS, DEFAULT_REFRESH_DELAY, DOMAIN, LOGGER
 from .coordinator import NormanBlindsDataUpdateCoordinator
 
 
@@ -201,41 +195,6 @@ class NormanBlindsRoomCover(CoordinatorEntity[NormanBlindsDataUpdateCoordinator]
             )
         return nearest
 
-    def _room_level_models(self) -> dict[int, int]:
-        """Return each distinct level (Lid) in this room and a model for it.
-
-        The hub addresses a room's blinds by their own ``Level`` value, so a
-        room command is sent once per distinct level rather than with a fixed
-        Lid. ``model`` is taken from a member window of that level.
-        """
-
-        level_models: dict[int, int] = {}
-        for item in self.coordinator.data.get("windows", []):
-            window = item.get("window") or {}
-            room_id = (
-                window.get("roomId")
-                or window.get("room_id")
-                or window.get("room")
-                or window.get("RId")
-            )
-            if room_id != self._room_id:
-                continue
-            level = window.get("Level")
-            if level is None:
-                level = window.get("Lid")
-            try:
-                level_int = int(level)
-            except (TypeError, ValueError):
-                continue
-            if level_int < 0:
-                continue
-            try:
-                model = int(window.get("model"))
-            except (TypeError, ValueError):
-                model = 1
-            level_models.setdefault(level_int, model)
-        return level_models
-
     async def _send_position_command(self, target: int) -> None:
         """Send a room position command to the gateway and refresh state."""
 
@@ -243,20 +202,7 @@ class NormanBlindsRoomCover(CoordinatorEntity[NormanBlindsDataUpdateCoordinator]
             LOGGER.warning("Cannot set position; missing room id for %s", self.name)
             return
 
-        level_models = self._room_level_models()
-        if level_models:
-            for index, level in enumerate(sorted(level_models)):
-                await self.coordinator.api.async_set_room_level_position(
-                    self._room_id, level, target, level_models[level]
-                )
-                if index < len(level_models) - 1:
-                    await asyncio.sleep(ROOM_LEVEL_COMMAND_DELAY)
-        else:
-            LOGGER.warning(
-                "No per-window level found for room %s; using legacy room command",
-                self._room_id,
-            )
-            await self.coordinator.api.async_set_room_position(self._room_id, target)
+        await self.coordinator.api.async_set_room_position(self._room_id, target)
         open_percent = max(0, min(100, 100 - target))
         self._attr_current_cover_position = open_percent
         self._attr_is_closed = open_percent == 0

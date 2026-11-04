@@ -316,39 +316,10 @@ class NormanBlindsApiClient:
         }
         return await self._request(REMOTE_CONTROL_ENDPOINT, payload)
 
-    async def async_set_room_level_position(
-        self,
-        room_id: int | str,
-        level: int,
-        position: int,
-        model: int = REMOTE_CONTROL_MODEL,
-    ) -> Any:
-        """Move one discovered room level (Lid) to a position.
-
-        ``Lid`` is the window's own ``Level`` value, not a fixed constant. The
-        caller sends one command per distinct level in the room.
-        """
-
-        if position not in ALLOWED_POSITIONS:
-            raise NormanBlindsApiError(
-                f"Invalid position {position}; supported values: {ALLOWED_POSITIONS}"
-            )
-
-        payload: dict[str, Any] = {
-            "type": "level",
-            "Lid": int(level),
-            "id": room_id,
-            "action": position,
-            "model": model,
-        }
-        return await self._request(REMOTE_CONTROL_ENDPOINT, payload)
-
     async def async_set_room_position(self, room_id: int | str, position: int) -> Any:
-        """Legacy whole-room position command using a fixed Lid.
+        """Send a position command to all blinds in a room.
 
-        Kept as a fallback for rooms where no per-window ``Level`` is
-        discoverable; the per-level path (async_set_room_level_position) is
-        preferred because ``Lid`` must match the room's real level.
+        ``Lid`` selects one of the room's ``groupname`` slots; slot 3 is "All".
         """
 
         if position not in ALLOWED_POSITIONS:

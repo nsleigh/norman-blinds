@@ -130,8 +130,10 @@ Other position values seem to be the same as 0.
 #### Room control
 
 ```json
-{ "type":"level", "id":"<room id>", "action":"<position>", "model":1 }
+{ "type":"level", "Lid":3, "id":"<room id>", "action":"<position>", "model":1 }
 ```
+
+`Lid` picks the room's group slot: `0` Left, `1` Middle, `2` Right, `3` All (whole room). See [API.md](API.md#move-a-room-position).
 
 #### Remote control with room ID
 

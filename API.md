@@ -245,7 +245,7 @@ The wrapper is `{ "totalWindow": 6, "windows": [ … ] }`.
 | `Id` | Window (blind) ID. It's the target for `type: "window"` commands. |
 | `Name` | Name set in the app. The default is `Id <last 4 hex digits of the motor ID>`. |
 | `RId`, `roomId` | The ID of the blind's room. Both carry the same value. |
-| `Level` | A single number: the blind's *level* (`0` for every blind here). The reference client sends this as `Lid` in `level` commands. Its exact meaning is not settled; see [Open questions](#open-questions). **[ref]** |
+| `Level` | A single number (`0` for every blind here). The reference client sends it as `Lid` in `level` commands, but on this hub `Lid` turned out to be a `groupname` slot, so `Lid: 0` moves only the Left group. Its meaning is unknown; it may number the panel tier on stacked shutters. **[observed] [ref]** |
 | `level` | A 5-element array: which of the room's `groupname` slots this blind belongs to. **[inferred]** |
 | `levelsort` | A 5-element array: the blind's position within each group it belongs to. **[inferred]** |
 | `groupId` | `level` packed into a bitmask: bit *n* is set when `level[n] == 1`. **[inferred]** |
@@ -298,23 +298,28 @@ POST /cgi-bin/cgi/RemoteControl
 #### Move a room (position)
 
 ```json
-{ "type": "level", "Lid": 0, "id": 17488, "action": 50, "model": 1 }
+{ "type": "level", "Lid": 3, "id": 17488, "action": 50, "model": 1 }
 ```
 
 | Field | Value |
 |-------|-------|
 | `type` | `"level"` |
-| `Lid` | The level to address. **Unverified**; see below. |
+| `Lid` | The `groupname` slot to move: `0` Left, `1` Middle, `2` Right, `3` All. **[observed]** |
 | `id` | The room `Id`. |
 | `action` | Target position, on the hub's scale. |
-| `model` | Taken from a blind in that level (`1`). |
+| `model` | The blinds' `model` value (`1`). |
 
-There are two candidates for `Lid`, and neither has been tested:
+Tested on the Living Room on 2026-11-04. The Study never moved, so `id` scopes the command to the room. **[observed]**
 
-- **`Lid: 9`** — what this integration sent up to v0.3.7. If `Lid` uses the same bitmask encoding as `groupId`, `9` means Left + All, which would address the room's All group.
-- **`Lid: <window Level>`** (`0` on this hub) — what the reference client sends. It sends one command per distinct `Level` in the room, 1 s apart. This is what PR #3 / v0.3.8 does.
+| `Lid` | Moved | Hub's stored `position` |
+|-------|-------|-------------------------|
+| `0` | Left only | Updated |
+| `1` | Middle only | Updated |
+| `2` | Right only | Updated |
+| `3` | Whole room (All) | Updated |
+| `9` | Whole room | **Not updated** |
 
-Test both on one room before relying on either. See [Open questions](#open-questions).
+Use **`Lid: 3`** for a whole room. `Lid: 9` (sent by this integration up to v0.3.7) moves the blinds, but the hub doesn't record the new positions, so `getWindowInfo` keeps reporting the old ones. `Lid: <window Level>` (the reference client's approach) is `0` here, which moves only the Left group.
 
 #### Room presets
 
@@ -343,7 +348,7 @@ Hub
           ├─ level[0..4]     membership in groupname slots
           ├─ groupId         same membership as a bitmask
           ├─ levelsort[0..4] order within each group
-          └─ Level           level number (0 here); sent as Lid by the ref client
+          └─ Level           0 here; meaning unknown (not the Lid to send)
 ```
 
 The following is **[inferred]** from the 6 blinds on this hub:
@@ -352,6 +357,7 @@ The following is **[inferred]** from the 6 blinds on this hub:
 - Every blind is in exactly one of Left, Middle or Right, and also in **All** (slot 3).
 - `groupId` encodes the same membership as a bitmask: `9` = `0b01001` (Left + All), `10` = `0b01010` (Middle + All), `12` = `0b01100` (Right + All).
 - `levelsort` gives each blind's order within a group. In its own group (Left, Middle or Right) every blind is `1`. In All (slot 3) the order is Middle `1`, Left `2`, Right `3` in both rooms, which isn't left-to-right. It may be the order the blinds were paired in.
+- The same slot numbers are what `Lid` selects in `level` commands (`0` Left … `3` All). **[observed]**
 - `Level` is `0` everywhere here. On hubs with stacked shutters it probably numbers the panel tier, but that's unconfirmed.
 
 ---
@@ -404,7 +410,7 @@ On this hub, the Study is `Style 13` and the Living Room is `Style 1`.
 
 Note that the error field has two different names. Data endpoints report expired sessions as **`error`**, while login and control use **`errorCode`**. **[observed]**
 
-Up to v0.3.7, this integration treated only `-15` as transient on login and every other code as an auth failure. PR #3 / v0.3.8 changes that: only `-13` is an auth failure, and every other nonzero login code is treated as transient.
+Up to v0.3.7, this integration treated only `-15` as transient on login and every other code as an auth failure. v0.3.8 changes that: only `-13` is an auth failure, and every other nonzero login code is treated as transient.
 
 ---
 
@@ -414,14 +420,15 @@ Up to v0.3.7, this integration treated only `-15` as transient on login and ever
 - **The CGI can lock up.** Cherokee can still be running a failed CGI request after it has sent the response headers. Read the whole response body before starting the next request, so that requests never overlap. **[ref]**
 - **Rapid commands.** The reference client spaces multi-command room moves 1 s apart, for reliability across firmware variants. **[ref]**
 - **No push.** The hub never pushes state changes. After sending a command, wait about 5 s and then poll `getWindowInfo`. **[observed]**
+- **Positions are the last command, not a measurement.** The blinds don't report where they are. `getWindowInfo.position` is whatever the hub last commanded, and only for commands it records (`Lid: 9` isn't recorded). Moving a blind any other way, such as by hand, leaves the reported position wrong. **[observed]**
 - **Stale readings.** `solar` is `65535` when there's no reading. Some blinds don't report `Rssi` at all. **[observed]**
 
 ---
 
 ## Open questions
 
-1. **What does `Lid` mean in `type: "level"`?** It could be the window's `Level` (the reference client's choice: `0` here) or a `groupId`-style bitmask (`9` = Left + All). Test by sending `{"type":"level","id":<room>,"action":50,"model":1}` to **one** room, first with `Lid: 0` and then with `Lid: 9`, and record which blinds move.
-2. **Can `Lid` target a single group** (for example `Lid: 1` for Left only, or the `9`/`10`/`12` bitmasks)? If so, Left, Middle and Right could become their own HA entities.
+1. **Resolved (2026-11-04):** `Lid` in `type: "level"` is the `groupname` slot (`0` Left, `1` Middle, `2` Right, `3` All). See [Move a room](#move-a-room-position).
+2. **Per-group entities.** Because `Lid` 0–2 move a single group, Left, Middle and Right could each become their own entity, without needing `type: "window"`.
 3. **What do `errorCode: -12` and `-13` mean exactly?** The app's error strings would answer this, but the app is iOS-only and App Store builds are encrypted, so they can't be read from the app itself. Capturing the app's plain-HTTP traffic is the way forward.
 4. **Endpoints that aren't documented yet.** The app has schedules, scenes, sunrise/sunset timers, and hub settings and firmware screens, so there must be more endpoints than the ones above. Capturing traffic while using each app screen would reveal them, and might also explain the scheduled session drops (the hub may be running its own timers).
 5. **The meaning of `initiated`, `admin`, `leave` and `version_control`** in the login response.

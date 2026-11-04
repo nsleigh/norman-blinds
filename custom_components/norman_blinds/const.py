@@ -11,7 +11,6 @@ LOGGER = logging.getLogger(__package__)
 DEFAULT_SCAN_INTERVAL = timedelta(seconds=30)
 DEFAULT_REQUEST_TIMEOUT = 10
 DEFAULT_REFRESH_DELAY = 5  # seconds delay before requesting refresh after a command
-ROOM_LEVEL_COMMAND_DELAY = 1  # seconds between per-level room commands
 LOGIN_ATTEMPTS = 3  # total login attempts on 5xx/connection/timeout errors
 LOGIN_RETRY_DELAY = 5  # seconds between login attempts
 MAX_TOLERATED_UPDATE_FAILURES = 2  # consecutive failed polls served from cached data
@@ -31,7 +30,11 @@ WINDOW_INFO_ENDPOINT = "/cgi-bin/cgi/getWindowInfo"
 REMOTE_CONTROL_ENDPOINT = "/cgi-bin/cgi/RemoteControl"
 
 REMOTE_CONTROL_MODEL = 1
-ROOM_REMOTE_CONTROL_LID = 9
+# "level" commands address one of the room's five groupname slots
+# (0 Left, 1 Middle, 2 Right, 3 All, 4 spare). Slot 3 moves the whole room and
+# updates the hub's stored positions. Lid 9 also moved the room but left the
+# stored positions stale, so HA showed the wrong state.
+ROOM_REMOTE_CONTROL_LID = 3
 ALLOWED_POSITIONS: tuple[int, ...] = (100, 81, 65, 50, 37, 25, 12, 0)
 SOLAR_NO_READING = 65535  # 0xFFFF: the blind reports no solar reading
 
