@@ -19,7 +19,7 @@ from .const import (
     ROOM_PRESETS,
     ROOM_REMOTE_CONTROL_LID,
     ROOM_INFO_ENDPOINT,
-    TRANSIENT_LOGIN_ERROR_CODES,
+    AUTH_LOGIN_ERROR_CODES,
     WINDOW_INFO_ENDPOINT,
 )
 
@@ -136,14 +136,18 @@ class NormanBlindsApiClient:
                 error_code = login_data.get("errorCode", 0)
                 if error_code not in (None, 0, "0"):
                     try:
-                        transient = int(error_code) in TRANSIENT_LOGIN_ERROR_CODES
+                        is_auth_failure = int(error_code) in AUTH_LOGIN_ERROR_CODES
                     except (TypeError, ValueError):
-                        transient = False
-                    if transient:
-                        raise NormanBlindsGatewayBusyError(
-                            f"Gateway busy, login errorCode: {error_code}"
+                        is_auth_failure = False
+                    if is_auth_failure:
+                        raise NormanBlindsAuthError(
+                            f"Login rejected, errorCode: {error_code}"
                         )
-                    raise NormanBlindsAuthError(f"Login failed, errorCode: {error_code}")
+                    # Any other nonzero code: assume the hub is transiently busy
+                    # (scheduled job, overloaded CGI) and let the caller ride it out.
+                    raise NormanBlindsGatewayBusyError(
+                        f"Gateway busy, login errorCode: {error_code}"
+                    )
                 self._gateway_info = {
                     "hubName": login_data.get("hubName"),
                     "hubId": login_data.get("hubId"),
@@ -313,7 +317,10 @@ class NormanBlindsApiClient:
         return await self._request(REMOTE_CONTROL_ENDPOINT, payload)
 
     async def async_set_room_position(self, room_id: int | str, position: int) -> Any:
-        """Send a position command to all blinds in a room."""
+        """Send a position command to all blinds in a room.
+
+        ``Lid`` selects one of the room's ``groupname`` slots; slot 3 is "All".
+        """
 
         if position not in ALLOWED_POSITIONS:
             raise NormanBlindsApiError(
