@@ -9,6 +9,7 @@ from aiohttp import ClientConnectionError, ClientResponseError, ClientSession, C
 from .const import (
     ALLOWED_POSITIONS,
     DEFAULT_APP_VERSION,
+    FAVORITE_RECORD_DELAY,
     DEFAULT_REQUEST_TIMEOUT,
     LOGGER,
     LOGIN_ATTEMPTS,
@@ -48,6 +49,8 @@ class NormanBlindsApiClient:
         self._app_version = DEFAULT_APP_VERSION
         self._gateway_info: dict[str, Any] = {}
         self._timeout = ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
+        # Delayed "record the favourite position" steps, keyed by room id.
+        self._pending_records: dict[str, asyncio.Task[None]] = {}
 
     @property
     def base_url(self) -> str:
@@ -300,8 +303,26 @@ class NormanBlindsApiClient:
 
         return {"rooms": rooms, "windows": combined}
 
+    def _cancel_pending_record(self, room_id: int | str | None = None) -> None:
+        """Cancel a pending favourite record step (for one room, or all)."""
+
+        keys = list(self._pending_records) if room_id is None else [str(room_id)]
+        for key in keys:
+            task = self._pending_records.pop(key, None)
+            if task is not None and not task.done():
+                task.cancel()
+
+    def async_cancel_pending(self) -> None:
+        """Cancel every pending favourite record step (e.g. on unload)."""
+
+        self._cancel_pending_record()
+
     async def async_set_window_position(self, window_id: int | str, position: int) -> Any:
         """Send a position command to a specific blind."""
+
+        # The window's room isn't known here, so cancel all pending records:
+        # a delayed record step must never move a blind the user just moved.
+        self._cancel_pending_record()
 
         if position not in ALLOWED_POSITIONS:
             raise NormanBlindsApiError(
@@ -321,6 +342,12 @@ class NormanBlindsApiClient:
 
         ``Lid`` selects one of the room's ``groupname`` slots; slot 3 is "All".
         """
+
+        self._cancel_pending_record(room_id)
+        return await self._send_room_position(room_id, position)
+
+    async def _send_room_position(self, room_id: int | str, position: int) -> Any:
+        """Send the room position command without touching pending records."""
 
         if position not in ALLOWED_POSITIONS:
             raise NormanBlindsApiError(
@@ -343,12 +370,55 @@ class NormanBlindsApiClient:
         if command is None:
             raise NormanBlindsApiError(f"Unknown preset '{preset}'. Allowed: {list(ROOM_PRESETS)}")
 
+        self._cancel_pending_record(room_id)
+
         payload: dict[str, Any] = {
             "type": command,
             "action": 2,
             "id": room_id,
         }
         return await self._request(REMOTE_CONTROL_ENDPOINT, payload)
+
+    async def async_room_favorite(
+        self,
+        room_id: int | str,
+        record_position: int,
+        record_delay: float = FAVORITE_RECORD_DELAY,
+    ) -> Any:
+        """Send the hub's Favorite, then record the position once the blinds stop.
+
+        The hub's Favorite reaches every motor (it doesn't depend on the room's
+        group membership) but doesn't update the hub's stored positions. After
+        ``record_delay`` seconds a room position command to ``record_position``
+        makes the hub record it. Any later command to this room, or any
+        single-blind command, cancels the record step.
+        """
+
+        if record_position not in ALLOWED_POSITIONS:
+            raise NormanBlindsApiError(
+                f"Invalid position {record_position}; supported values: {ALLOWED_POSITIONS}"
+            )
+
+        result = await self.async_set_room_preset(room_id, "favorite")
+        key = str(room_id)
+
+        async def _record() -> None:
+            try:
+                await asyncio.sleep(record_delay)
+                await self._send_room_position(room_id, record_position)
+            except asyncio.CancelledError:
+                raise
+            except Exception as err:  # pylint: disable=broad-except
+                LOGGER.warning(
+                    "Couldn't record the favourite position for room %s: %s", room_id, err
+                )
+            finally:
+                if self._pending_records.get(key) is task:
+                    self._pending_records.pop(key, None)
+
+        task = asyncio.get_running_loop().create_task(_record())
+        self._pending_records[key] = task
+        return result
 
     @property
     def gateway_info(self) -> dict[str, Any]:
