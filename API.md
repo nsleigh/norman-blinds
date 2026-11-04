@@ -9,6 +9,7 @@ Each fact is tagged with where it comes from:
 | **[observed]** | Seen on this repo's hub (`NORMANHUB_9DDD2D`, 2 rooms, 6 blinds), or used by this integration in production. |
 | **[ref]** | Taken from the gen1 client in [Herbertmt978/Norman-HA-Integration](https://github.com/Herbertmt978/Norman-HA-Integration), which talks to the same hub. |
 | **[inferred]** | Worked out from the data here, but not yet confirmed by a test. |
+| **[app]** | Seen in a capture of the official iOS app's traffic to this hub (2026-11-04, via an HTTP proxy). |
 
 The Gen 2 **ShadeAuto** hub (`com.norman.SmartShutter`) uses a different protocol on port 10123. This document doesn't cover it.
 
@@ -25,6 +26,9 @@ The Gen 2 **ShadeAuto** hub (`com.norman.SmartShutter`) uses a different protoco
   - [AdminLogin / AdminLogout](#adminlogin--adminlogout)
   - [getRoomInfo](#getroominfo)
   - [getWindowInfo](#getwindowinfo)
+  - [getSceneInfo](#getsceneinfo)
+  - [getScheduleInfo](#getscheduleinfo)
+  - [UploadGPS](#uploadgps)
   - [RemoteControl](#remotecontrol)
 - [Data model: rooms, groups, levels](#data-model-rooms-groups-levels)
 - [Positions](#positions)
@@ -44,7 +48,7 @@ The Gen 2 **ShadeAuto** hub (`com.norman.SmartShutter`) uses a different protoco
 | API base | `http://<hub>/cgi-bin/cgi/<Endpoint>` on port 80. **[observed]** |
 | Discovery | mDNS `_http._tcp.local`, instance `NORMANHUB_<last 6 MAC hex digits>`, port 80. **[observed]** |
 | Other open ports | TCP 53 (doesn't answer DNS), 111 (rpcbind, nothing registered), 199 (SMUX), and UDP 161 (SNMP, `public` community, `system` view only). None of these is part of the API. **[observed]** |
-| Official app | iOS **Norman remote control**, bundle `com.norman.SmartShutterControlPlus`, v2.11.21, last updated 2023-01-03. There was never an Android build. **[observed]** |
+| Official app | iOS **Norman remote control**, bundle `com.norman.SmartShutterControlPlus`, v2.11.21, last updated 2023-01-03. There was never an Android build. It sends `User-Agent: SmartShutterControl/103 CFNetwork/… Darwin/…`. **[observed] [app]** |
 
 The integration only needs TCP 80.
 
@@ -71,6 +75,10 @@ There are two ways to manage the session:
 
 - **This integration** keeps one session open. It logs in again only when the hub reports that the session has expired. **[observed]**
 - **The reference client** wraps every operation as login → request(s) → logout, behind a lock, so that no two requests ever overlap at the hub. It logs out with `AdminLogout` followed by `GatewayLogout`. **[ref]**
+
+- **The official app** logs in once when it opens and uses that session for everything. It didn't log out at any point in the capture, and it never calls `AdminLogin`. **[app]**
+
+The session cookie is `Session=<number>`. Later responses echo it back in a lowercase `session: Session=…` header rather than `Set-Cookie`. **[app]**
 
 The official app and an integration can hold separate sessions at the same time. **[ref]**
 
@@ -272,6 +280,60 @@ The wrapper is `{ "totalWindow": 6, "windows": [ … ] }`.
 | `3cce` (15566) | Study | 0 | `[0,1,0,1,0]` | 10 | `[0,1,0,1,0]` | Middle + All |
 | `ab36` (43830) | Study | 0 | `[0,0,1,1,0]` | 12 | `[0,0,1,3,0]` | Right + All |
 
+### getSceneInfo
+
+Lists scenes. Needs a session. The official app calls it twice at startup, with `Type` `2` and then `1`. **[app]**
+
+```http
+POST /cgi-bin/cgi/getSceneInfo
+{ "Type": 2 }
+```
+
+```json
+{ "totalScences": 0, "Scenes": [] }
+```
+
+```http
+POST /cgi-bin/cgi/getSceneInfo
+{ "Type": 1 }
+```
+
+```json
+{ "totalMScences": 0, "MScenes": [] }
+```
+
+The keys are spelled `Scences` by the hub. What distinguishes `Type: 1` (`MScenes`) from `Type: 2` (`Scenes`) is unknown, and this hub has none of either, so the record format is unknown too.
+
+### getScheduleInfo
+
+Lists the hub's schedules. Needs a session. **[app]**
+
+```http
+POST /cgi-bin/cgi/getScheduleInfo
+{}
+```
+
+```json
+{ "totalschedule": 0, "schedule": [] }
+```
+
+This hub has no schedules, so the record format is unknown.
+
+### UploadGPS
+
+**Writes** the hub's location. Needs a session. The official app sends this every time it opens, with the phone's location. The hub uses it for the `latitude`, `longitude`, `timezone`, `sunrise` and `sunset` values in the `GatewayLogin` response. **[app] [inferred]**
+
+```http
+POST /cgi-bin/cgi/UploadGPS
+{ "latitude": nn.nnn, "longitude": nn.nnn, "timezone": 0.0 }
+```
+
+```json
+{ "action": "set", "status": "Success" }
+```
+
+This request sends numbers, while `GatewayLogin` returns the same values as strings.
+
 ### RemoteControl
 
 Moves blinds. Needs a session. The response is fire-and-forget: a `200` with no `errorCode` (or `errorCode: 0`) means the hub accepted the command, not that the blind has finished moving. A nonzero `errorCode` means the hub rejected the command. **[observed] [ref]**
@@ -337,7 +399,9 @@ Use **`Lid: 3`** for a whole room. `Lid: 9` (sent by this integration up to v0.3
 
 The hub replies `{"Favorite": "ok"}` (keyed by the command type) rather than `{"remote": "ok"}`. **[observed]**
 
-`action` **must be `2`**. With `action: 1`, every room moved, whatever `id` was sent. The reference client also sends `action: 2` for `fullopen` and `fullclose`. It has no `Favorite` command. **[observed] [ref]**
+`action` **must be `2`**. With `action: 1`, every room moved, whatever `id` was sent. The official app and the reference client also send `action: 2` for `fullopen` and `fullclose`. **[observed] [app] [ref]**
+
+The official app sends `Favorite` **without** an `action` field: `{"type": "Favorite", "id": <room id>}`. With `action: 2` it works the same. The app never reads or sends the favourite position itself, so it isn't exposed by the API; it's presumably stored in the motors or the hub. **[app] [observed]**
 
 ---
 
@@ -424,6 +488,7 @@ Up to v0.3.7, this integration treated only `-15` as transient on login and ever
 - **Scheduled session drops.** The hub drops sessions and refuses logins (HTTP 500, or `-15`) at **02:10 and 02:24 every night**, and at **:08 past the hour from 05:00 to 09:00**. Each drop lasts about 30–40 s. The hub doesn't reboot during these windows: its uptime keeps counting, and it stays on the network. Don't schedule commands at these times. **[observed]**
 - **The CGI can lock up.** Cherokee can still be running a failed CGI request after it has sent the response headers. Read the whole response body before starting the next request, so that requests never overlap. **[ref]**
 - **Rapid commands.** The reference client spaces multi-command room moves 1 s apart, for reliability across firmware variants. **[ref]**
+- **The scheduled drops aren't schedules.** This hub has no schedules and no scenes (`getScheduleInfo` and `getSceneInfo` return empty lists), so the 02:10, 02:24 and morning :08 login failures come from the firmware itself. **[app]**
 - **No push.** The hub never pushes state changes. After sending a command, wait about 5 s and then poll `getWindowInfo`. **[observed]**
 - **Positions are the last command, not a measurement.** The blinds don't report where they are. `getWindowInfo.position` is whatever the hub last commanded, and only for commands it records. Moving a blind any other way, such as by hand, leaves the reported position wrong. **[observed]**
 
@@ -446,7 +511,7 @@ Up to v0.3.7, this integration treated only `-15` as transient on login and ever
 1. **Resolved (2026-11-04):** `Lid` in `type: "level"` is the `groupname` slot (`0` Left, `1` Middle, `2` Right, `3` All). See [Move a room](#move-a-room-position).
 2. **Per-group entities.** Because `Lid` 0–2 move a single group, Left, Middle and Right could each become their own entity, without needing `type: "window"`.
 3. **What do `errorCode: -12` and `-13` mean exactly?** The app's error strings would answer this, but the app is iOS-only and App Store builds are encrypted, so they can't be read from the app itself. Capturing the app's plain-HTTP traffic is the way forward.
-4. **Endpoints that aren't documented yet.** The app has schedules, scenes, sunrise/sunset timers, and hub settings and firmware screens, so there must be more endpoints than the ones above. Capturing traffic while using each app screen would reveal them, and might also explain the scheduled session drops (the hub may be running its own timers).
+4. **Endpoints that aren't documented yet.** The 2026-11-04 capture found `getSceneInfo`, `getScheduleInfo` and `UploadGPS`, and showed the drops aren't caused by schedules. Still not captured: creating a schedule or scene (the record formats), and the hub settings and firmware screens.
 5. **The meaning of `initiated`, `admin`, `leave` and `version_control`** in the login response.
 6. **Does `type: "window"` record positions?** `fullclose` does and `Favorite` doesn't (tested 2026-11-04). Check by sending it and comparing `getWindowInfo.position` before and after.
-7. **Where is the favourite position stored?** The hub doesn't record it after a `Favorite` command, and nothing in `getRoomInfo` or `getWindowInfo` obviously holds it (`scenes[].Position` is `0` everywhere). Without it, an integration can't show the right position after Favourite.
+7. **Where is the favourite position stored?** Not in anything the API returns. The hub doesn't record it after a `Favorite` command, nothing in `getRoomInfo` or `getWindowInfo` holds it (`scenes[].Position` is `0` everywhere), and the official app never reads it either. It's presumably stored in the motors. An integration has to be told the position (this one has a **Favorite position** option). **[app] [observed]**
