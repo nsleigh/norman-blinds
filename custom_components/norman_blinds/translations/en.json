@@ -9,6 +9,13 @@
           "host": "Host",
           "password": "Password"
         }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate with your Norman hub",
+        "description": "The hub at {host} rejected the login. If you haven't changed the password, the hub itself may be stuck: power-cycle it, then submit the same password again.",
+        "data": {
+          "password": "Password"
+        }
       }
     },
     "error": {
@@ -17,7 +24,8 @@
       "unknown": "Unexpected error"
     },
     "abort": {
-      "already_configured": "This hub is already configured"
+      "already_configured": "This hub is already configured",
+      "reauth_successful": "Re-authentication was successful"
     }
   },
   "entity": {
