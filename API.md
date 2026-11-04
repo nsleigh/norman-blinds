@@ -335,6 +335,8 @@ Use **`Lid: 3`** for a whole room. `Lid: 9` (sent by this integration up to v0.3
 | `fullclose` | Privacy | `button.<room>_privacy` |
 | `Favorite` | Favourite (capital F) | `button.<room>_favorite` |
 
+The hub replies `{"Favorite": "ok"}` (keyed by the command type) rather than `{"remote": "ok"}`. **[observed]**
+
 `action` **must be `2`**. With `action: 1`, every room moved, whatever `id` was sent. The reference client also sends `action: 2` for `fullopen` and `fullclose`. It has no `Favorite` command. **[observed] [ref]**
 
 ---
@@ -430,7 +432,9 @@ Up to v0.3.7, this integration treated only `-15` as transient on login and ever
   | `level` with `Lid` 0–3 | Yes **[observed]** |
   | `level` with `Lid: 9` | No **[observed]** |
   | `fullopen` (View) | Yes **[observed]**: `cover.study` changed to open 19 s after View was pressed |
-  | `fullclose`, `Favorite`, `window` | Not checked |
+  | `fullclose` (Privacy) | Yes **[observed]**: Living Room stored 50 → 100 |
+  | `Favorite` | **No** **[observed]**: blinds moved to favourite, stored positions stayed at 100 |
+  | `window` | Not checked |
 
 - **Resyncing wrong positions.** If the reported positions don't match the blinds, send the room's real position as a `level` command with `Lid: 3` (for example `100` if the blinds are closed). The blinds don't move if they're already there, and the hub records the position. **[observed]**
 - **Stale readings.** `solar` is `65535` when there's no reading. Some blinds don't report `Rssi` at all. **[observed]**
@@ -444,4 +448,5 @@ Up to v0.3.7, this integration treated only `-15` as transient on login and ever
 3. **What do `errorCode: -12` and `-13` mean exactly?** The app's error strings would answer this, but the app is iOS-only and App Store builds are encrypted, so they can't be read from the app itself. Capturing the app's plain-HTTP traffic is the way forward.
 4. **Endpoints that aren't documented yet.** The app has schedules, scenes, sunrise/sunset timers, and hub settings and firmware screens, so there must be more endpoints than the ones above. Capturing traffic while using each app screen would reveal them, and might also explain the scheduled session drops (the hub may be running its own timers).
 5. **The meaning of `initiated`, `admin`, `leave` and `version_control`** in the login response.
-6. **Do `fullclose`, `Favorite` and `type: "window"` record positions?** Check by sending each one and comparing `getWindowInfo.position` before and after. If one doesn't, HA will show the wrong state after using it, as it did with `Lid: 9`.
+6. **Does `type: "window"` record positions?** `fullclose` does and `Favorite` doesn't (tested 2026-11-04). Check by sending it and comparing `getWindowInfo.position` before and after.
+7. **Where is the favourite position stored?** The hub doesn't record it after a `Favorite` command, and nothing in `getRoomInfo` or `getWindowInfo` obviously holds it (`scenes[].Position` is `0` everywhere). Without it, an integration can't show the right position after Favourite.
