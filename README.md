@@ -5,6 +5,7 @@
   <a href="https://github.com/hacs/integration"><img alt="HACS" src="https://img.shields.io/badge/HACS-custom-orange"></a>
   <a href="https://www.home-assistant.io/"><img alt="Home Assistant" src="https://img.shields.io/badge/Home%20Assistant-2026.1%2B-7e57c2"></a>
   <a href="LICENSE"><img alt="license" src="https://img.shields.io/github/license/nsleigh/norman-blinds?color=4c9a52"></a>
+  <a href="https://github.com/nsleigh/norman-blinds/releases"><img alt="downloads" src="https://img.shields.io/github/downloads/nsleigh/norman-blinds/total?label=downloads&color=3b6fd6"></a>
   <a href="https://github.com/nsleigh/norman-blinds/stargazers"><img alt="stars" src="https://img.shields.io/github/stars/nsleigh/norman-blinds?style=flat&label=stars&color=c9a227"></a>
 </p>
 
