@@ -1,0 +1,45 @@
+name: Release zip
+
+# Builds norman_blinds.zip (the integration's files at the zip root, as HACS
+# expects with zip_release) and attaches it to the release. Run it by hand
+# with a tag to add the zip to an existing release.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to attach the zip to (e.g. v0.3.11)
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  zip:
+    name: Build and attach zip
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - name: Check manifest version matches the tag
+        run: |
+          version=$(jq -r .version custom_components/norman_blinds/manifest.json)
+          if [ "v$version" != "$TAG" ]; then
+            echo "::error::manifest.json version $version doesn't match tag $TAG"
+            exit 1
+          fi
+
+      - name: Build zip
+        working-directory: custom_components/norman_blinds
+        run: |
+          zip -r -X "$GITHUB_WORKSPACE/norman_blinds.zip" . -x '*__pycache__*' '*.pyc'
+          unzip -l "$GITHUB_WORKSPACE/norman_blinds.zip"
+
+      - name: Attach zip to release
+        run: gh release upload "$TAG" norman_blinds.zip --clobber
