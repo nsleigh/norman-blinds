@@ -15,7 +15,9 @@ Reverse engineering the Norman Blinds hub protocol to create a Home Assistant in
 
 If you stumble across this and want help setting it up raise an issue.
 
-All the HA code for this was generated with AI (codex), it works but might not be best practice. 
+All the HA code for this was generated with AI (codex), it works but might not be best practice.
+
+Also see https://github.com/Herbertmt978/Norman-HA-Integration for an alternative version that support Gen1 and Gen2 hubs.
 
 ## Installation
 
